@@ -2,7 +2,7 @@
 
 Frontend-only PoC for the O₂ Germany Scam Checker: a static site built with Vite (plain HTML, CSS and JavaScript) and hosted on Netlify. The backend is a separate project — nothing server-side lives in this repo.
 
-Status: scaffold only (Hello World). UX and design come next.
+Status: demo page with one example flow (a fake customs/parcel SMS), in German and English. The backend is mocked in `src/demo.js`.
 
 ## Principles (KISS)
 
@@ -21,13 +21,26 @@ On Windows, `runapp.bat` starts the dev server in the background and opens the b
 
 ## Layout
 
-- `index.html` — page markup and entry point
-- `src/main.js` — JavaScript entry (imports `style.css`)
-- `src/style.css` — styles
-- `public/` — static files served as-is from the site root (create it when needed)
-- `vite.config.js` — dev server port 5180 (also set in both `.bat` files)
+- `index.html` — page markup and entry point; every state (checking, result, demo notice, screenshot popup) is a `hidden` section
+- `src/main.js` — JavaScript entry (imports `style.css`): language, check flow, result, feedback, share
+- `src/strings.js` — every visible text, German (`de`) and English (`en`) with the same keys
+- `src/demo.js` — stand-in for the backend: the example message and its answer (`POST /v1/scam-check`), feedback logging (`POST /v1/feedback`)
+- `src/style.css` — styles, mobile first
+- `public/` — static files served as-is from the site root: On Air fonts, O₂ icons and logo, the hero bubble, `og.jpg` (link preview)
+- `vite.config.js` — dev server port 5180 (also set in both `.bat` files); fills in `__SITE_URL__` for the link preview
 - `netlify.toml` — Netlify build settings
 - `.claude/skills/o2-design/` — O₂ brand design skill
+
+## Texts and languages
+
+- Never put text in `index.html`. Elements name a key from `src/strings.js` with `data-i18n` (text), `data-i18n-html` (the few texts with markup), `data-i18n-placeholder` or `data-i18n-label` (aria-label). Add every key to both `de` and `en`.
+- Language order: `?lang=` in the URL (for that visit only), then the choice saved from the DE/EN switch, then the browser (English for `en…`, otherwise German).
+- O₂ voice in both languages: short, spoken, no exclamation marks; German uses "du" and „…“, English is British.
+- On Air has no "₂" glyph: page text writes `O<sub>2</sub>` (via `data-i18n-html`). Plain "O₂" is fine only where On Air isn't used (tab title, meta tags, shared texts).
+
+## Backend hand-over
+
+`src/demo.js` returns only the key fields of the proposed response: `request_id`, `verdict`, `type`, `headline`, `reason`, `link { domain, status }`, `next_steps`, `if_it_happened`. To go live, replace `checkMessage()` and `sendFeedback()` with `fetch` calls and drop `isExample()` and the demo notice. `link.status === 'malicious'` (known in the domain database) shows the Onlineschutz upsell; a non-null `type` (a known, common scam) shows the share card.
 
 ## Design: o2-design skill
 
@@ -46,3 +59,5 @@ Netlify's production branch is `dev` (set in the Netlify UI), so every push to `
 
 - `.bat` files must keep CRLF line endings (enforced by `.gitattributes`).
 - To change the port, update `vite.config.js`, `runapp.bat` and `shutdown.bat` together.
+- Put `:hover` styles inside `@media (hover: hover)`; on phones a hover state sticks after a tap.
+- Text fields need a font size of 16 px or more, or iOS zooms in on focus.

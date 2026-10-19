@@ -1,8 +1,850 @@
+/* O₂ Scam-Check. Mobile first; tokens and rules from .claude/skills/o2-design. */
+
+@font-face {
+  font-family: 'On Air';
+  src: url('/fonts/OnAir-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'On Air';
+  src: url('/fonts/OnAir-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'On Air';
+  src: url('/fonts/OnAir-Black.woff2') format('woff2');
+  font-weight: 900;
+  font-display: swap;
+}
+
+:root {
+  --blue: #0050ff; /* Beyond Blue, always the dominant colour */
+  --blue-dark: #00008c;
+  --blue-soft: #e6eeff;
+  --ink: #00001e;
+  --ink-2: #3c3c46;
+  --ink-3: #73737d;
+  --line: #b4b4be;
+  --soft: #f3f3f5;
+  --danger: #d42e50; /* status error; 4.9:1 on white, so it works for text */
+  --danger-soft: #fff0f3;
+  --gradient: linear-gradient(180deg, #00008c 0%, #0050ff 80%, #246cff 100%); /* functional Blauverlauf */
+  --shadow: 0 4px 16px rgb(0 0 30 / 0.08);
+  --radius: 20px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  min-height: 100vh;
+  font: 16px/1.4 'On Air', Arial, sans-serif;
+  color: var(--ink);
+  background: var(--soft);
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+}
+
+h1,
+h2,
+h3,
+p,
+ol {
+  margin: 0;
+}
+
+h1,
+h2 {
+  text-wrap: balance;
+}
+
+h2 {
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+sub {
+  font-size: 0.6em; /* the 2 in O₂ (On Air has no ₂ glyph), sized like the logo */
+  line-height: 0;
+}
+
+button,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: var(--blue);
+}
+
+[hidden] {
+  display: none !important;
+}
+
+:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 640px;
+  margin-inline: auto;
+  padding: 0 16px;
+}
+
+/* O₂ icons, recoloured with currentColor */
+.icon {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  background: currentColor;
+  -webkit-mask: var(--icon) center / contain no-repeat;
+  mask: var(--icon) center / contain no-repeat;
+}
+.i-camera { --icon: url('/icons/camera.svg'); }
+.i-close { --icon: url('/icons/close.svg'); }
+.i-info { --icon: url('/icons/info.svg'); }
+.i-search { --icon: url('/icons/search.svg'); }
+.i-share { --icon: url('/icons/share.svg'); }
+.i-shield { --icon: url('/icons/shield.svg'); }
+.i-thumb { --icon: url('/icons/thumb.svg'); }
+.i-tick { --icon: url('/icons/tick.svg'); }
+.i-warning { --icon: url('/icons/warning.svg'); }
+.i-thumb.down { transform: rotate(180deg); }
+
+/* ---------- Hero ---------- */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 8px 0 80px;
+  border-radius: 0 0 28px 28px;
+  background: var(--gradient);
+  color: #fff;
+}
+
+.bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.logo {
+  margin-left: -17px; /* the SVG carries its own safe zone */
+}
+
+.product {
+  font-weight: 700;
+  font-size: 17px;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #82dcfa; /* O₂ Light Blue: a tag, not a button */
+  color: var(--blue-dark);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.lang {
+  display: flex;
+  margin-left: auto;
+  border: 1.5px solid #fff;
+  border-radius: 999px;
+}
+
+.lang button {
+  position: relative;
+  min-width: 40px;
+  min-height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.lang button::after {
+  content: '';
+  position: absolute;
+  inset: -7px -2px; /* 44 px tap area */
+}
+
+.lang button[aria-pressed='true'] {
+  background: #fff;
+  color: var(--blue);
+}
+
+.lang button[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.hero :focus-visible {
+  outline-color: #fff;
+}
+
+.hero h1 {
+  position: relative;
+  margin-top: 20px;
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.lead {
+  position: relative;
+  max-width: 30ch;
+  margin-top: 10px;
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+/* ---------- Cards and buttons ---------- */
+
+main {
+  position: relative;
+  display: grid;
+  gap: 16px;
+  margin-top: -56px;
+}
+
+.card {
+  padding: 20px;
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 22px;
+  border: 0;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  transition:
+    background-color 200ms var(--ease),
+    color 200ms var(--ease),
+    transform 200ms var(--ease);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: var(--blue);
+  color: #fff;
+}
+
+.btn-primary:disabled {
+  background: var(--blue-dark);
+  cursor: progress;
+}
+
+.btn-secondary {
+  border: 2px solid var(--blue);
+  background: #fff;
+  color: var(--blue);
+}
+
+.btn-on-blue {
+  background: #fff;
+  color: var(--blue);
+}
+
+.btn-tertiary {
+  width: auto;
+  margin: 0 auto;
+  background: none;
+  color: var(--blue);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1.5px solid var(--ink-3); /* like the field: 4.7:1 */
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    border-color 200ms var(--ease),
+    color 200ms var(--ease);
+}
+
+.pill .icon {
+  width: 20px;
+  height: 20px;
+  color: var(--blue);
+}
+
+/* ---------- Message form ---------- */
+
+.ask {
+  display: grid;
+  gap: 12px;
+}
+
+.field {
+  border: 1.5px solid var(--ink-3); /* 4.7:1, an input's edge needs at least 3:1 */
+  border-radius: 16px;
+  transition:
+    border-color 200ms var(--ease),
+    box-shadow 200ms var(--ease);
+}
+
+.field:has(textarea:focus) {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgb(0 80 255 / 0.15);
+}
+
+.field textarea {
+  display: block;
+  width: 100%;
+  min-height: calc(4 * 1.4em + 20px);
+  max-height: calc(8 * 1.4em + 20px); /* not vh: on iOS it ignores the keyboard */
+  padding: 14px 16px 6px;
+  border: 0;
+  outline: 0;
+  resize: none;
+  background: none;
+  font-size: 16px; /* 16 px or more stops iOS from zooming in */
+  line-height: 1.4;
+}
+
+.field textarea::placeholder {
+  color: var(--ink-3);
+  opacity: 1;
+}
+
+.field-tools {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 8px 8px;
+}
+
+.tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--blue);
+  font-size: 15px;
+  font-weight: 700;
+  transition: background-color 200ms var(--ease);
+}
+
+.tool-icon {
+  width: 48px;
+  padding: 0;
+}
+
+.hint {
+  color: var(--danger);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.note {
+  color: var(--ink-3);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* ---------- Slot: progress, result, notice ---------- */
+
+.slot {
+  scroll-margin-top: 16px;
+}
+
+.slot.reserved {
+  min-height: calc(100vh - 32px);
+  min-height: calc(100svh - 32px);
+}
+
+.checklist {
+  display: grid;
+  gap: 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.checklist li {
+  position: relative;
+  min-height: 24px;
+  padding-left: 36px;
+  color: var(--ink-3);
+  font-weight: 700;
+}
+
+.checklist li::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+}
+
+.checklist .active,
+.checklist .done {
+  color: var(--ink);
+}
+
+.checklist .active::before {
+  border-color: var(--blue);
+  border-right-color: transparent;
+  animation: spin 800ms linear infinite;
+}
+
+.checklist .done::before {
+  border-color: var(--blue);
+  background: var(--blue);
+}
+
+.checklist .done::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  -webkit-mask: url('/icons/tick.svg') center / contain no-repeat;
+  mask: url('/icons/tick.svg') center / contain no-repeat;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.result {
+  display: grid;
+  gap: 16px;
+  animation: rise 320ms var(--ease);
+  transition: opacity 200ms var(--ease);
+}
+
+.result[aria-busy='true'] {
+  opacity: 0.45; /* fetching the answer again in the other language */
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.verdict {
+  padding: 0;
+  overflow: hidden;
+}
+
+/* The backend's verdict sets the tone; the demo only has scam. */
+.verdict[data-verdict='scam'] {
+  --tone: var(--danger);
+  --tone-soft: var(--danger-soft);
+}
+
+.verdict-head {
+  display: grid;
+  gap: 12px;
+  padding: 20px 20px 18px;
+  background: var(--tone-soft);
+}
+
+.verdict-icon {
   display: grid;
   place-items: center;
-  font-family: system-ui, sans-serif;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--tone);
+  color: #fff;
+}
+
+.verdict-icon .icon {
+  width: 26px;
+  height: 26px;
+}
+
+#headline {
+  font-size: 26px; /* near-black: red stays for the icon and the tint */
+  line-height: 1.1;
+}
+
+#headline span {
+  display: inline-block; /* lines break between sentences only */
+}
+
+#headline:focus {
+  outline: 0;
+}
+
+.verdict-body {
+  display: grid;
+  gap: 16px;
+  padding: 18px 20px 20px;
+}
+
+#reason mark {
+  display: inline-block; /* the domain moves to the next line as a whole */
+  padding: 0 1px 0 4px; /* a full stop right after it must not look detached */
+  border-radius: 6px;
+  background: #ffe3ea;
+  color: #b0122a;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.verdict h3 {
+  margin-bottom: -4px;
+  font-size: 18px;
+}
+
+.steps {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+
+.steps li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  counter-increment: step;
+  font-weight: 700;
+}
+
+.steps li::before {
+  content: counter(step);
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  font-size: 15px;
+}
+
+.help {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--soft);
+  color: var(--ink-2);
+  font-size: 15px;
+}
+
+.help a {
+  position: relative;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.help a::after {
+  content: '';
+  position: absolute;
+  inset: -14px -8px; /* 48 px tap area for the most urgent action */
+}
+
+.feedback {
+  padding-top: 16px;
+  border-top: 1px solid var(--soft);
+}
+
+.feedback-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.feedback-row p {
+  flex: 1 1 100%;
+  font-weight: 700;
+}
+
+.feedback-thanks {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  font-weight: 700;
+}
+
+.feedback-thanks .icon {
+  color: var(--blue);
+}
+
+.protect {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  background: var(--blue);
+  color: #fff;
+}
+
+.protect > .icon {
+  width: 36px;
+  height: 36px;
+}
+
+.protect :focus-visible {
+  outline-color: #fff;
+}
+
+.protect-note {
+  justify-self: center;
+  margin-top: -4px;
+  font-size: 13px;
+}
+
+.protect-note:empty {
+  display: none;
+}
+
+.share {
+  display: grid;
+  gap: 12px;
+}
+
+.share-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.notice {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+}
+
+.notice > .icon {
+  color: var(--blue);
+}
+
+.footer {
+  padding-top: 32px;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom));
+  color: var(--ink-2);
+  font-size: 13px;
   text-align: center;
+}
+
+/* ---------- Screenshot popup: bottom sheet on phones, centred on larger screens ---------- */
+
+.sheet {
+  width: 100%;
+  max-width: 100%;
+  margin: auto 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 24px 24px 0 0;
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 24px 48px rgb(0 0 30 / 0.14);
+}
+
+.sheet[open] {
+  animation: sheet-in 320ms var(--ease);
+}
+
+.sheet::backdrop {
+  background: rgb(0 0 30 / 0.5);
+}
+
+.sheet form {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  padding: 24px 20px calc(20px + env(safe-area-inset-bottom));
+}
+
+.sheet .btn {
+  margin-top: 8px;
+}
+
+.close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-2);
+}
+
+.tile {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+.tile .icon {
+  width: 28px;
+  height: 28px;
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+/* ---------- Hover only where there is a real pointer; on phones it would stick after a tap ---------- */
+
+@media (hover: hover) {
+  .btn-primary:hover {
+    background: var(--blue-dark);
+  }
+
+  .btn-secondary:hover {
+    background: var(--blue);
+    color: #fff;
+  }
+
+  .btn-on-blue:hover,
+  .btn-tertiary:hover {
+    color: var(--blue-dark);
+  }
+
+  .pill:hover {
+    border-color: var(--blue);
+    color: var(--blue);
+  }
+
+  .tool:hover {
+    background: var(--blue-soft);
+  }
+}
+
+/* ---------- Larger screens ---------- */
+
+@media (min-width: 600px) {
+  .sheet {
+    max-width: 440px;
+    margin: auto;
+    border-radius: 24px;
+  }
+
+  .sheet[open] {
+    animation-name: rise;
+  }
+}
+
+@media (min-width: 720px) {
+  .hero {
+    padding-bottom: 104px;
+  }
+
+  /* O₂ bubble, only on large screens: on phones it would sit behind the white text.
+     As a CSS background it isn't even downloaded there. */
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 24px;
+    right: calc(50% - 600px);
+    width: 380px;
+    height: 380px;
+    background: url('/bubble.webp') center / contain no-repeat;
+    pointer-events: none;
+  }
+
+  .hero h1 {
+    margin-top: 40px;
+    font-size: 60px;
+  }
+
+  .lead {
+    font-size: 20px;
+  }
+
+  main {
+    margin-top: -72px;
+  }
+
+  .card,
+  .verdict-head,
+  .verdict-body {
+    padding: 28px;
+  }
+
+  .verdict {
+    padding: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }

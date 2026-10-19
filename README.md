@@ -2,6 +2,18 @@
 
 Static frontend built with [Vite](https://vite.dev): plain HTML, CSS and JavaScript. Hosted on Netlify — every push to `dev` deploys automatically. Work happens on `dev` for now; `main` only accepts pull requests. The backend is a separate project.
 
+## What it does
+
+One mobile-first page in O₂ design, in German and English (DE/EN switch, or `?lang=en`):
+
+1. Paste a suspicious SMS, e-mail or chat message, or tap **Beispiel einfügen** for the demo example. Then tap **Jetzt prüfen**.
+2. The answer: verdict, why, what to do now, and the 116 116 card-blocking number in case you already entered details.
+3. Feedback (thumbs up/down plus an optional reason) is tied to the answer's `request_id`.
+4. If the link is already in the domain database, the page says that O₂ Onlineschutz would have blocked it, with a link to the Onlineschutz page.
+5. For a common scam, a card asks you to warn others: the native share sheet on phones, WhatsApp, e-mail or copy elsewhere.
+
+The camera button only shows a "coming soon" popup for now. The backend is mocked in `src/demo.js` with a single demo case. Any other text shows a short demo notice.
+
 ## Run locally
 
 Requires [Node.js](https://nodejs.org) 22 or newer (LTS).
@@ -24,10 +36,13 @@ Netlify reads `netlify.toml` (build command `npm run build`, publish directory `
 ## Layout
 
 ```
-index.html          page markup (entry point)
-src/                JavaScript and CSS
-public/             static files served as-is (create when needed)
-vite.config.js      dev server settings
+index.html          page markup (entry point), no texts
+src/main.js         behaviour: language, check, result, feedback, share
+src/strings.js      all texts, German and English
+src/demo.js         backend stand-in: the example and its answer
+src/style.css       styles (mobile first, O₂ tokens)
+public/             fonts, icons, logo, bubble, link-preview image (served as-is)
+vite.config.js      dev server settings, link-preview URL
 netlify.toml        Netlify build settings
 runapp.bat          start the dev server and open the browser (Windows)
 shutdown.bat        stop the dev server (Windows)

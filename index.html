@@ -1,15 +1,154 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>O₂ Scam Checker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#00008c" />
+    <title>Ist das Betrug? · O₂ Scam-Check</title>
+    <meta name="description" content="Füg die Nachricht ein. Wir sagen dir sofort, woran du bist." />
+    <!-- Link previews: crawlers don't run JavaScript, so one static version serves both languages. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="O₂ Scam-Check" />
+    <meta property="og:description" content="Ist das Betrug? · Is this a scam?" />
+    <meta property="og:image" content="__SITE_URL__/og.jpg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preload" href="/fonts/OnAir-Regular.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/OnAir-Bold.woff2" as="font" type="font/woff2" crossorigin />
   </head>
   <body>
-    <main>
-      <h1>Hello World</h1>
-      <p>O₂ Germany Scam Checker · frontend PoC</p>
+    <!-- Texts come from src/strings.js via the data-i18n attributes. -->
+    <header class="hero">
+      <div class="wrap">
+        <div class="bar">
+          <img class="logo" src="/o2-logo-white.svg" alt="O₂" width="60" height="58" />
+          <span class="product" data-i18n="product"></span>
+          <span class="badge">Demo</span>
+          <div class="lang" role="group" aria-label="Sprache · Language">
+            <button type="button" data-lang="de" lang="de" aria-label="Deutsch">DE</button>
+            <button type="button" data-lang="en" lang="en" aria-label="English">EN</button>
+          </div>
+        </div>
+        <h1 data-i18n="hero.title"></h1>
+        <p class="lead" data-i18n="hero.lead"></p>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <form class="card ask" id="form" novalidate>
+        <div class="field">
+          <label class="sr-only" for="message" data-i18n="form.label"></label>
+          <textarea id="message" rows="4" data-i18n-placeholder="form.placeholder"></textarea>
+          <div class="field-tools">
+            <button type="button" class="tool" id="example" data-i18n="form.example"></button>
+            <button type="button" class="tool tool-icon" id="upload" data-i18n-label="form.screenshot">
+              <span class="icon i-camera" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+        <p class="hint" id="hint" hidden data-i18n="form.empty"></p>
+        <button type="submit" class="btn btn-primary" id="submit">
+          <span class="icon i-search" aria-hidden="true"></span>
+          <span id="submit-label" data-i18n="form.submit"></span>
+        </button>
+        <p class="note" data-i18n="form.note"></p>
+      </form>
+
+      <!-- One slot below the form: checking, then the result (or the demo notice). -->
+      <section class="slot" id="slot" hidden>
+        <p class="sr-only" id="status" role="status"></p>
+
+        <div class="card" id="progress" hidden>
+          <ol class="checklist">
+            <li data-i18n="progress.read"></li>
+            <li data-i18n="progress.link"></li>
+            <li data-i18n="progress.done"></li>
+          </ol>
+        </div>
+
+        <div class="result" id="result" hidden>
+          <article class="card verdict" id="verdict">
+            <div class="verdict-head">
+              <span class="verdict-icon"><span class="icon i-warning" aria-hidden="true"></span></span>
+              <h2 id="headline" tabindex="-1"></h2>
+            </div>
+            <div class="verdict-body">
+              <p id="reason"></p>
+              <h3 data-i18n="result.steps"></h3>
+              <ol class="steps" id="steps"></ol>
+              <p class="help" id="help"></p>
+              <div class="feedback" id="feedback" aria-live="polite">
+                <div class="feedback-row" data-step="ask">
+                  <p data-i18n="feedback.ask"></p>
+                  <button type="button" class="pill" data-rating="up">
+                    <span class="icon i-thumb" aria-hidden="true"></span><span data-i18n="feedback.yes"></span>
+                  </button>
+                  <button type="button" class="pill" data-rating="down">
+                    <span class="icon i-thumb down" aria-hidden="true"></span><span data-i18n="feedback.no"></span>
+                  </button>
+                </div>
+                <div class="feedback-row" data-step="why" hidden>
+                  <p data-i18n="feedback.why"></p>
+                  <button type="button" class="pill" data-reason="wrong_verdict" data-i18n="feedback.wrong"></button>
+                  <button type="button" class="pill" data-reason="unclear" data-i18n="feedback.unclear"></button>
+                  <button type="button" class="pill" data-reason="not_helpful" data-i18n="feedback.useless"></button>
+                </div>
+                <p class="feedback-thanks" data-step="thanks" hidden>
+                  <span class="icon i-tick" aria-hidden="true"></span><span data-i18n="feedback.thanks"></span>
+                </p>
+              </div>
+            </div>
+          </article>
+
+          <aside class="card protect" id="protect" hidden>
+            <span class="icon i-shield" aria-hidden="true"></span>
+            <h2 data-i18n-html="protect.title"></h2>
+            <p data-i18n-html="protect.text"></p>
+            <a class="btn btn-on-blue" href="https://www.o2online.de/extras/cloud-sicherheit/onlineschutz/" target="_blank" rel="noopener">
+              <span data-i18n-html="protect.cta"></span>
+            </a>
+            <p class="protect-note" data-i18n="protect.note"></p>
+          </aside>
+
+          <aside class="card share" id="share" hidden>
+            <h2 data-i18n="share.title"></h2>
+            <p data-i18n="share.text"></p>
+            <button type="button" class="btn btn-secondary" id="share-native" hidden>
+              <span class="icon i-share" aria-hidden="true"></span>
+              <span data-i18n="share.button"></span>
+            </button>
+            <div class="share-links" id="share-links" hidden>
+              <a class="pill" id="share-whatsapp" target="_blank" rel="noopener">WhatsApp</a>
+              <a class="pill" id="share-email" data-i18n="share.email"></a>
+              <button type="button" class="pill" id="share-copy" data-i18n="share.copy"></button>
+            </div>
+          </aside>
+
+          <button type="button" class="btn btn-tertiary" id="reset" data-i18n="reset"></button>
+        </div>
+
+        <div class="card notice" id="notice" hidden>
+          <span class="icon i-info" aria-hidden="true"></span>
+          <p data-i18n="notice.text"></p>
+          <button type="button" class="btn btn-secondary" id="notice-example" data-i18n="form.example"></button>
+        </div>
+      </section>
     </main>
+
+    <footer class="wrap footer">
+      <p data-i18n="footer.text"></p>
+    </footer>
+
+    <dialog class="sheet" id="upload-dialog" aria-labelledby="upload-title">
+      <form method="dialog">
+        <button class="close" data-i18n-label="upload.close"><span class="icon i-close" aria-hidden="true"></span></button>
+        <span class="tile"><span class="icon i-camera" aria-hidden="true"></span></span>
+        <h2 id="upload-title" data-i18n="upload.title"></h2>
+        <p data-i18n="upload.text"></p>
+        <button class="btn btn-primary" autofocus data-i18n="upload.ok"></button>
+      </form>
+    </dialog>
+
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
