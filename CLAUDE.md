@@ -35,7 +35,7 @@ Use the `o2-design` skill for any UI, styling or copy work. It holds O₂'s colo
 
 ## Deployment
 
-Netlify builds and deploys every push to `main` (`netlify.toml`: `npm run build` → `dist/`, Node 22). Pushing to `main` means going live, so run `npm run build` first. The site sends `X-Robots-Tag: noindex` to keep the PoC out of search engines; remove that header at launch.
+The repo is `github.com/whalebone/poc-o2_germany_scamchecker_frontend`. `main` only accepts changes through pull requests: push a branch and open a PR. Netlify builds and deploys every change on `main` (`netlify.toml`: `npm run build` → `dist/`, Node 22). Merging into `main` means going live, so run `npm run build` first. The site sends `X-Robots-Tag: noindex` to keep the PoC out of search engines; remove that header at launch.
 
 ## Gotchas
 
