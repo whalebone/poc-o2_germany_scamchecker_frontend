@@ -35,7 +35,12 @@ Use the `o2-design` skill for any UI, styling or copy work. It holds O₂'s colo
 
 ## Deployment
 
-The repo is `github.com/whalebone/poc-o2_germany_scamchecker_frontend`. For now all work goes straight to the `dev` branch: commit and push there. `main` only accepts changes through pull requests that need someone else's approval, so leave it alone until the PoC is ready to merge. Netlify's production branch is `dev`, so every push to `dev` deploys (`netlify.toml`: `npm run build` → `dist/`, Node 22). Pushing to `dev` means going live, so run `npm run build` first. The site sends `X-Robots-Tag: noindex` to keep the PoC out of search engines; remove that header at launch.
+The repo is `github.com/whalebone/poc-o2_germany_scamchecker_frontend`.
+
+- Keep `dev` checked out. Commit and push straight to `dev`; no other branches or pull requests.
+- Leave `main` alone: it only accepts pull requests that need someone else's approval.
+
+Netlify's production branch is `dev` (set in the Netlify UI), so every push to `dev` deploys (`netlify.toml`: `npm run build` → `dist/`, Node 22). Pushing to `dev` means going live, so run `npm run build` first. The site sends `X-Robots-Tag: noindex` to keep the PoC out of search engines; remove that header at launch.
 
 ## Gotchas
 
