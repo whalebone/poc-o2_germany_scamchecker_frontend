@@ -1,6 +1,6 @@
 # O₂ Germany – Scam Checker (frontend PoC)
 
-Static frontend built with [Vite](https://vite.dev): plain HTML, CSS and JavaScript. Hosted on Netlify — every push to `main` deploys automatically. The backend is a separate project.
+Static frontend built with [Vite](https://vite.dev): plain HTML, CSS and JavaScript. Hosted on Netlify — every push to `dev` deploys automatically. Work happens on `dev` for now; `main` only accepts pull requests. The backend is a separate project.
 
 ## Run locally
 
@@ -19,7 +19,7 @@ npm run preview   # serve dist/ locally
 
 ## Deploy
 
-Netlify reads `netlify.toml` (build command `npm run build`, publish directory `dist`, Node 22). One-time setup: in Netlify, choose **Add new site → Import an existing project → GitHub**, pick this repository and keep the detected settings.
+Netlify reads `netlify.toml` (build command `npm run build`, publish directory `dist`, Node 22). One-time setup: in Netlify, choose **Add new site → Import an existing project → GitHub**, pick this repository, set the production branch to `dev` and keep the other detected settings.
 
 ## Layout
 
