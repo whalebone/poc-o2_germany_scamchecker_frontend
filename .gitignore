@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.netlify/
+*.log
+*.local
+.claude/settings.local.json
+.DS_Store
+Thumbs.db
