@@ -4,7 +4,7 @@ Static frontend built with [Vite](https://vite.dev): plain HTML, CSS and JavaScr
 
 ## What it does
 
-One page in O₂ design, in German and English (DE/EN switch, or `?lang=en`). Phones get one column; desktops get the form on the left and everything else on the right.
+One page in O₂ design, in German and English (DE/EN switch, or `?lang=en`). Phones get one column; desktops get one wide message field, then full-width cards split in two halves.
 
 1. Paste a suspicious SMS, e-mail or chat message, or tap **Beispiel einfügen** for the demo example. Then tap **Jetzt prüfen**.
 2. While it checks (about 5 seconds), a magnifying glass reads the message and looks the link up in the blocklist.
@@ -13,7 +13,7 @@ One page in O₂ design, in German and English (DE/EN switch, or `?lang=en`). Ph
 5. If the link is already in the domain database, the page says that O₂ Onlineschutz would have blocked it, with a link to the Onlineschutz page.
 6. For a common scam, a card asks you to warn others: the native share sheet on phones, WhatsApp, e-mail or copy elsewhere.
 
-Before anything is checked, the page shows the five common scam types as short cartoons (stacked on phones, tabs on desktop).
+Before anything is checked, the page shows the five common scam types as short cartoons (stacked on phones, a list and one story at a time on desktop).
 
 The camera button only shows a "coming soon" popup for now. The backend is mocked in `src/demo.js` with a single demo case. Any other text shows a short demo notice.
 

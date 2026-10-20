@@ -2,7 +2,7 @@
 
 Frontend-only PoC for the O₂ Germany Scam Checker: a static site built with Vite (plain HTML, CSS and JavaScript) and hosted on Netlify. The backend is a separate project — nothing server-side lives in this repo.
 
-Status: demo page with one example flow (a fake customs/parcel SMS), in German and English, with animated explainers for the five common scam types. Separate layouts for phones (one column) and desktop (two columns from 1024 px). The backend is mocked in `src/demo.js`.
+Status: demo page with one example flow (a fake customs/parcel SMS), in German and English, with animated explainers for the five common scam types. Separate layouts for phones (one column) and desktop (from 1024 px: a wide composer, then full-width split cards). The backend is mocked in `src/demo.js`.
 
 **Before any UI or UX work, read `docs/product.md`.** It holds:
 - the product goal and the owner's requirements

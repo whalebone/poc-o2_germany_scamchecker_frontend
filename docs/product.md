@@ -89,7 +89,11 @@ Round 2 (feedback on the deployed round 1, 2026-10-20):
 4. **„Kennst du diese Maschen?“** below the slot, only while the slot is empty: the five stories stacked.
 5. **Screenshot popup:** a native `<dialog>`.
 
-**Desktop (from 1024 px):** the same hero, then two columns (5:7). The form card on the left, sticky when the window is at least 700 px tall. On the right: the scam types as one card with five avatar tabs (the Trickser in each costume) and one story at a time; on check, the loader and then the result take that column.
+**Desktop (from 1024 px):** full-width rows, one thing at a time, no tiles side by side.
+1. A compact hero (H1 64 px, the lead on one line, a small bubble in the free dark area).
+2. One wide composer card overlapping the hero: the field (3 rows, growing to 8) and "Jetzt prüfen" to its right, bottom-aligned.
+3. Below it, either the scam types as one master-detail card (the five as a list with costume avatars and names on the left, the chosen story on the right), or the checking card (the drawing centred, at most 720 px), or the result.
+4. The result as full-width cards, each split in two halves of the same height: verdict (pink head with the spotted scene, tag and headline / the explanation), Onlineschutz (scene / words and button), the trick (scene / steps and rule), share as a slim band.
 
 **A story** (landing page and result): a cartoon of 9 s in three beats, the three steps under it as a little diagram (① — ② — ③, lit in step with the beats), and one rule to remember with a tick.
 
@@ -107,7 +111,7 @@ Keep these unless you have a reason to change them. Round 1 comes first (the des
   - The checking card, then the result, swap in place.
   - Focus moves to the headline.
 - Nothing in the loader may sound like "reply to the message" (e.g. "Antwort schreiben"), the one thing a scam target must not do. Round 1's checklist became the Lupe loader in round 2.
-- **Result order:** verdict card → „So läuft der Trick“ (round 2) → Onlineschutz → share → restart.
+- **Result order:** verdict card → Onlineschutz → „So läuft der Trick“ (round 2) → share → restart, on every screen size, so reading and tab order match what people see.
   - Feedback sits inside the verdict card because it rates the answer. Under two promo cards it would get fewer taps.
   - Its question sits above the Ja/Nein pills. Side by side doesn't fit below 390 px.
 - **One filled button per view.** The form has "Jetzt prüfen". On the result, only the white Onlineschutz button is filled; share is an outline button and restart is a text button.
@@ -172,7 +176,7 @@ Keep these unless you have a reason to change them. Round 1 comes first (the des
 - the tips block and prices
 - "Network Protection" naming
 - a link-only input (scams without a link need the text)
-- side-by-side layouts (until round 2: desktop now has two columns, at the owner's request)
+- side-by-side layouts (desktop has split cards since round 2, but no tiles side by side)
 
 **Taken from it:**
 - the "you check yourself → it stops automatically" contrast
@@ -204,7 +208,7 @@ The designer's verdict on the concept: go with changes; on the build: ship once 
   - Liebes‑Lügner: hearts between your phone and a photo (his lila fingertips on both edges, his bandana tail peeking out) → „€?“, you send coins → the photo tips over, it was him, the heart breaks.
 - **Play once, pausable** (WCAG 2.2.2, binding through the BFSG). A story plays once when it is fully in view (95 %, or 80 % of a short screen), so nobody gets a half-seen start at the bottom edge, and rests on its last frame with all steps lit. Its 48 px button sits next to the heading, outside the drawing, and reads Pause / Abspielen / Nochmal ansehen. Leaving the screen mid-play resets it. The spotted scene (1.3 s) and the Onlineschutz scene (3 s) play once, without a button.
 - **Reduced motion:** nothing plays and there is no button. Each scene shows its last frame, which tells the most (him with the loot; in Goldesel he has already left), and all steps are lit. The loader stays still.
-- **Phones stack the five stories.** The owner asked for scrolling, most people never swipe a carousel, and a peeking next card shrinks the scene. **Desktop** shows one at a time with five 56 px costume avatars as tabs; the active one gets a Beyond Blue ring, not a fill, so there is still one filled button per view.
+- **Phones stack the five stories.** The owner asked for scrolling, most people never swipe a carousel, and a peeking next card shrinks the scene. **Desktop** shows one at a time: the five as a list (56 px costume avatar and name) next to the chosen story. The active row gets a Blue Soft fill and a Beyond Blue ring, so there is still one filled button per view.
 - The stories hide while the slot shows anything and come back with "Andere Nachricht prüfen": under a result they'd dilute the Onlineschutz moment, and the result has its own story.
 
 **Loader**
@@ -223,8 +227,13 @@ The designer's verdict on the concept: go with changes; on the build: ship once 
 - The share card names the type: „Der Paket‑Trickser ist gerade viel unterwegs.“
 
 **Desktop**
-- Two columns, 5:7, from 1024 px; 720–1023 px stays one wide column.
-- The form sticks only when the window is at least 700 px tall, so it fits next to the result on 768 px laptops. On check, the page scrolls only when the right column's top is out of sight.
+- From 1024 px; 720–1023 px stays one wide column.
+- **Full-width rows, not side-by-side tiles.** The first desktop build put the form left and everything else right: two tiles of unequal height, a long empty left column on the result, and the bubble half covered. The owner called it "meh". Each block is now one full-width card; where a card has two parts, it splits them into halves of the same height.
+- **Onlineschutz straight after the verdict**, as a band, not a sticky box in a side rail: a rail reads like an ad, and next to a scam warning like a sales pitch. At 1440×900 it is one short scroll away.
+- The verdict head is top-aligned in its pink half: centred, the headline fell below the fold at 1024×768.
+- The master-detail list is at least 320 px wide, so „Hallo‑Mama‑Schwindler“ fits next to its avatar at 1024 px. Its rows are buttons with `aria-current`; the active one gets a Blue Soft fill and a Beyond Blue ring.
+- On check, the page scrolls only as far as the loader needs (`nearest`); phones still move the slot to the top.
+- The bubble is 190 px and sits between the language switch and the composer, behind no text.
 - Ctrl/Cmd+Enter in the field checks the message.
 
 **Copy and details**

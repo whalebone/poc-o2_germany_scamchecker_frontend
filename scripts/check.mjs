@@ -197,10 +197,10 @@ check('with reduced motion, there is no play button', !(await visible(r, '.type-
 
 // Desktop
 const d = await open('', { viewport: { width: 1280, height: 800 }, mobile: false })
-check('desktop: form and scam types side by side', await d.evaluate(() => {
-  const form = document.getElementById('form').getBoundingClientRect()
-  const types = document.getElementById('types').getBoundingClientRect()
-  return types.left > form.right && Math.abs(types.top - form.top) < 2
+check('desktop: one wide composer, the scam types below it at the same width', await d.evaluate(() => {
+  const box = (id) => document.getElementById(id).getBoundingClientRect()
+  const field = document.querySelector('.field').getBoundingClientRect()
+  return box('types').top > box('form').bottom && Math.abs(box('types').width - box('form').width) < 2 && box('submit').left > field.right
 }))
 check('desktop: one scam type at a time', (await d.locator('.type-card:visible').count()) === 1)
 await d.click('.type-tab:nth-child(3)')
@@ -210,6 +210,15 @@ await d.focus('#message')
 await d.keyboard.press('Control+Enter')
 check('desktop: Ctrl+Enter checks the message', await visible(d, '#progress'))
 await d.waitForSelector('#result:not([hidden])', { timeout: 15000 })
+check('desktop: the result is full-width rows, verdict then Onlineschutz', await d.evaluate(() => {
+  const box = (id) => document.getElementById(id).getBoundingClientRect()
+  return box('protect').top > box('verdict').bottom && Math.abs(box('protect').width - box('verdict').width) < 2
+}))
+check('desktop: the verdict card is split in two halves', await d.evaluate(() => {
+  const head = document.querySelector('.verdict-head').getBoundingClientRect()
+  const body = document.querySelector('.verdict-body').getBoundingClientRect()
+  return body.left >= head.right && Math.abs(body.height - head.height) < 2
+}))
 check('desktop shows WhatsApp, e-mail and copy', (await visible(d, '#share-links')) && !(await visible(d, '#share-native')))
 const shared = decodeURIComponent(await d.getAttribute('#share-whatsapp', 'href'))
 const warnings = Object.keys(DE).filter((key) => key.startsWith('share.message.')).map((key) => DE[key])

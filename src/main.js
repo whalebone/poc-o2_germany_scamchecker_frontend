@@ -18,7 +18,7 @@ const feedback = $('feedback')
 const langButtons = document.querySelectorAll('[data-lang]')
 
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)')
-const desktop = matchMedia('(min-width: 1024px)') // two columns: the form left, everything else right
+const desktop = matchMedia('(min-width: 1024px)') // the wide layout: a composer, then the result in two columns
 const scrollBehavior = () => (reducedMotion.matches ? 'auto' : 'smooth')
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -154,7 +154,7 @@ for (const type of SCAM_TYPES) {
   )
   typeTabs.insertAdjacentHTML(
     'beforeend',
-    `<button type="button" class="type-tab" data-type="${type}" data-i18n-label="scam.${type}.name">${avatar(type)}</button>`,
+    `<button type="button" class="type-tab" data-type="${type}">${avatar(type)}<span data-i18n="scam.${type}.name"></span></button>`,
   )
 }
 
@@ -170,8 +170,9 @@ typeTabs.addEventListener('click', (event) => {
 
 // ---------- Message field ----------
 
+// Fit the field to its text; min-height and max-height in style.css set the range (4–8 rows, 3–8 on desktop).
 function autoGrow() {
-  message.style.height = 'auto'
+  message.style.height = '0'
   message.style.height = `${message.scrollHeight}px`
 }
 
@@ -238,11 +239,11 @@ function showInSlot(view = null) {
   slot.classList.toggle('reserved', view === progress || view === result)
 }
 
-// Phones move the slot to the top of the screen. On desktop it sits next to the form, so only when it's out of sight.
-function bringIntoView(el) {
-  const { top } = el.getBoundingClientRect()
-  if (desktop.matches && top >= 0 && top < innerHeight / 2) return
-  el.scrollIntoView({ behavior: scrollBehavior(), block: desktop.matches ? 'nearest' : 'start' })
+// Phones move the slot to the top of the screen. Desktop has it right below the form, so it only
+// scrolls as far as the loader needs.
+function bringIntoView() {
+  if (desktop.matches) progress.scrollIntoView({ behavior: scrollBehavior(), block: 'nearest' })
+  else slot.scrollIntoView({ behavior: scrollBehavior(), block: 'start' })
 }
 
 // While busy, taps on the button and the language switch are ignored, and the switch looks it.
@@ -259,7 +260,7 @@ async function check(text) {
   $('status').textContent = t('form.busy')
   delete progress.dataset.phase
   showInSlot(progress)
-  bringIntoView(slot)
+  bringIntoView()
 
   const answer = await showChecking(/https?:\/\/|www\./i.test(text), checkMessage(text, lang))
 
