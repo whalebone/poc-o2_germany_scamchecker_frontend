@@ -27,7 +27,12 @@ npm install
 npm run dev       # http://localhost:5180 with live reload
 npm run build     # production build in dist/
 npm run preview   # serve dist/ locally
+npm run check     # behaviour checks (needs the dev server and Google Chrome)
+npm run shots     # screenshots of every state into shots/
+npm run og        # re-render the link-preview image public/og.jpg
 ```
+
+Product context, the backend proposal and every UX decision are in [docs/product.md](docs/product.md).
 
 ## Deploy
 
@@ -42,6 +47,8 @@ src/strings.js      all texts, German and English
 src/demo.js         backend stand-in: the example and its answer
 src/style.css       styles (mobile first, O₂ tokens)
 public/             fonts, icons, logo, bubble, link-preview image (served as-is)
+docs/product.md     product context, backend proposal, UX decisions, open items
+scripts/            behaviour checks, screenshots, link-preview image
 vite.config.js      dev server settings, link-preview URL
 netlify.toml        Netlify build settings
 runapp.bat          start the dev server and open the browser (Windows)

@@ -4,6 +4,16 @@ Frontend-only PoC for the O₂ Germany Scam Checker: a static site built with Vi
 
 Status: demo page with one example flow (a fake customs/parcel SMS), in German and English. The backend is mocked in `src/demo.js`.
 
+**Before any UI or UX work, read `docs/product.md`.** It holds:
+- the product goal and the owner's requirements
+- the backend proposal (all fields)
+- the O₂ Onlineschutz facts behind the upsell
+- every UX decision with its reason, and the measured layout limits
+- the open items
+- the iteration loop, including how to run a product-designer review
+
+Don't redo that research. Update the file when a decision changes.
+
 ## Principles (KISS)
 
 - Plain HTML, CSS and JavaScript (ES modules). No framework, TypeScript, linters or extra tooling until there is a concrete need.
@@ -16,8 +26,20 @@ Status: demo page with one example flow (a fake customs/parcel SMS), in German a
 - `npm run dev` — dev server with live reload at http://localhost:5180
 - `npm run build` — production build into `dist/` (what Netlify runs)
 - `npm run preview` — serve the built `dist/` locally
+- `npm run check` — behaviour checks against the running dev server (language, check flow, result, feedback, share, keyboard, contrast)
+- `npm run shots` — screenshots of every state into `shots/` (git-ignored): phone 390 px German, small phones, English at 360 px, desktop
+- `npm run og` — re-render `public/og.jpg` (link preview) after changing the hero title or logo
 
-On Windows, `runapp.bat` starts the dev server in the background and opens the browser; `shutdown.bat` stops it. The user usually has it running with the page open: edits reload in the browser on their own, so don't start a second server. Server output goes to `dev-server.log`.
+On Windows, `runapp.bat` starts the dev server in the background and opens the browser; `shutdown.bat` stops it. The user usually has it running with the page open: edits reload in the browser on their own, so don't start a second server. Server output goes to `dev-server.log`. `check`, `shots` and `og` use `playwright-core` with the installed Google Chrome; no browser download.
+
+## UI iteration loop
+
+1. Read `docs/product.md` and make the change. Texts go in `src/strings.js` (both languages), styles in `src/style.css`.
+2. Run `npm run check`. If you changed behaviour on purpose, update `scripts/check.mjs` too.
+3. Run `npm run shots` and look at the result, 360 px, English and desktop shots.
+4. For a visible UX change, run a product-designer review as described in `docs/product.md`.
+5. Record any new decision in `docs/product.md`.
+6. Run `npm run build`, then commit and push to `dev`.
 
 ## Layout
 
@@ -29,6 +51,8 @@ On Windows, `runapp.bat` starts the dev server in the background and opens the b
 - `public/` — static files served as-is from the site root: On Air fonts, O₂ icons and logo, the hero bubble, `og.jpg` (link preview)
 - `vite.config.js` — dev server port 5180 (also set in both `.bat` files); fills in `__SITE_URL__` for the link preview
 - `netlify.toml` — Netlify build settings
+- `docs/product.md` — product context, backend proposal, UX decisions, open items
+- `scripts/` — `check.mjs`, `shots.mjs`, `og.mjs` (see Commands)
 - `.claude/skills/o2-design/` — O₂ brand design skill
 
 ## Texts and languages
