@@ -1,12 +1,13 @@
 // Screenshots of every page state, for design reviews. Needs the dev server.
 // npm run shots [-- <outDir> <baseUrl>]  →  shots/ (git-ignored), 2x pixel density
 // Names: m = phone 390×844 German, s = small phones (375×667, 360×780), e = English 360, d = desktop 1440 and 1024.
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, readdirSync, rmSync } from 'node:fs'
 import { chromium } from 'playwright-core'
 
 const out = process.argv[2] || 'shots'
 const base = process.argv[3] || 'http://localhost:5180/'
 mkdirSync(out, { recursive: true })
+for (const file of readdirSync(out)) if (file.endsWith('.png')) rmSync(`${out}/${file}`) // no leftovers from removed states
 
 const browser = await chromium.launch({ channel: 'chrome' }) // the installed Google Chrome
 const errors = []
@@ -31,11 +32,13 @@ const resultShown = async (page) => {
 const m = await open({ width: 390, height: 844 })
 await shot(m, 'm01-start')
 await shot(m, 'm02-start-full', true)
-await m.locator('.type-card').first().scrollIntoViewIfNeeded()
-await wait(4600) // the story in the middle of beat 2
-await shot(m, 'm03-story-playing')
-await wait(5000) // and at its end
-await shot(m, 'm04-story-done')
+await m.locator('#types').scrollIntoViewIfNeeded()
+await shot(m, 'm03-tiles')
+await m.click('.tile:nth-child(3) summary')
+await wait(300)
+await m.locator('.tile:nth-child(3)').scrollIntoViewIfNeeded()
+await shot(m, 'm04-tile-open')
+await m.click('.tile:nth-child(3) summary')
 await m.evaluate(() => window.scrollTo(0, 0))
 await m.click('#submit')
 await wait(300)
@@ -98,11 +101,13 @@ await shot(en, 'e03-result-full', true)
 
 // Desktop
 const d = await open({ width: 1440, height: 900 }, { mobile: false })
-await wait(4600)
 await shot(d, 'd01-start')
-await d.click('.type-tab:nth-child(3)')
-await wait(4600)
-await shot(d, 'd02-tab-family')
+await d.click('.tile:nth-child(3) summary')
+await d.locator('#types').scrollIntoViewIfNeeded()
+await wait(300)
+await shot(d, 'd02-tiles-one-open')
+await d.click('.tile:nth-child(3) summary')
+await d.evaluate(() => window.scrollTo(0, 0))
 await d.click('#example')
 await d.click('#submit')
 await wait(2600)

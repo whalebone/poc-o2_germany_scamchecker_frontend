@@ -18,7 +18,7 @@ const feedback = $('feedback')
 const langButtons = document.querySelectorAll('[data-lang]')
 
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)')
-const desktop = matchMedia('(min-width: 1024px)') // the wide layout: a composer, then the result in two columns
+const desktop = matchMedia('(min-width: 1024px)') // the wide layout: a composer, then full-width rows
 const scrollBehavior = () => (reducedMotion.matches ? 'auto' : 'smooth')
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -83,9 +83,9 @@ function setLanguage(next) {
 
 for (const button of langButtons) button.addEventListener('click', () => setLanguage(button.dataset.lang))
 
-// ---------- Cartoons (scenes.js): each plays once when it is fully in view ----------
-// The stories get a pause / play / watch-again button: anything that moves for longer than 5 s
-// must be pausable (WCAG 2.2.2). With reduced motion nothing plays: each shows its last frame (scenes.css).
+// ---------- The trick's story on the result (scenes.js): it plays once when it is fully in view ----------
+// It gets a pause / play / watch-again button: anything that moves for longer than 5 s
+// must be pausable (WCAG 2.2.2). With reduced motion nothing plays: it shows its last frame (scenes.css).
 
 const TOGGLE = { playing: 'story.pause', paused: 'story.play', done: 'story.replay' }
 
@@ -111,7 +111,7 @@ const inView = new IntersectionObserver(
   { threshold: [0, 0.25, 0.5, 0.75, 0.95, 1] },
 )
 
-// Watch a scene from the start, also after its content changed.
+// Watch a story from the start, also after its content changed.
 function watch(el) {
   setState(el, reducedMotion.matches ? 'done' : null)
   inView.unobserve(el)
@@ -135,38 +135,51 @@ document.addEventListener('click', (event) => {
   }
 })
 
-// A scam type's story: a heading with the play button, the cartoon, its three steps (in step with it)
-// and the rule to remember.
-const storyHTML = (type, heading) => `
-  <div class="story-head">${heading}<button type="button" class="scene-toggle"><span class="icon" aria-hidden="true"></span></button></div>
+// A scam type's three steps and the rule to remember, for its tile and its story.
+const steps = (type) => [1, 2, 3].map((n) => `<li data-i18n="scam.${type}.s${n}"></li>`).join('')
+const rule = (type) => `<p class="rule"><span class="icon i-tick" aria-hidden="true"></span><span data-i18n="scam.${type}.rule"></span></p>`
+
+// The story on the result: a heading with the play button, the cartoon, the steps (in step with it), the rule.
+const storyHTML = (type) => `
+  <div class="story-head"><h2 data-i18n="result.trick"></h2><button type="button" class="scene-toggle"><span class="icon" aria-hidden="true"></span></button></div>
   <div class="scene">${story(type)}</div>
-  <ol class="beats">${[1, 2, 3].map((n) => `<li data-i18n="scam.${type}.s${n}"></li>`).join('')}</ol>
-  <p class="rule"><span class="icon i-tick" aria-hidden="true"></span><span data-i18n="scam.${type}.rule"></span></p>`
+  <ol class="beats">${steps(type)}</ol>${rule(type)}`
 
-// ---------- The five scam types: stacked on phones, one at a time with tabs on desktop ----------
+// ---------- The five scam types on the landing page: still tiles that open on tap ----------
+// Closed: a picture (a placeholder until there are real images: the Trickser in the type's costume),
+// the name and one line. Open: the three steps and the rule. One open at a time (details name).
 
-const typeList = $('type-list')
-const typeTabs = $('type-tabs')
 for (const type of SCAM_TYPES) {
-  typeList.insertAdjacentHTML(
+  $('tiles').insertAdjacentHTML(
     'beforeend',
-    `<article class="card type-card" data-type="${type}"><div class="story">${storyHTML(type, `<h3 data-i18n="scam.${type}.name"></h3>`)}</div></article>`,
-  )
-  typeTabs.insertAdjacentHTML(
-    'beforeend',
-    `<button type="button" class="type-tab" data-type="${type}">${avatar(type)}<span data-i18n="scam.${type}.name"></span></button>`,
+    `<li class="tile"><details name="scam-types">
+      <summary>
+        <span class="tile-img">${avatar(type)}</span>
+        <h3 data-i18n="scam.${type}.name"></h3>
+        <span class="tile-text" data-i18n="scam.${type}.text"></span>
+        <span class="tile-more"><span data-i18n="result.trick"></span><span class="icon i-add" aria-hidden="true"></span></span>
+      </summary>
+      <div class="tile-body"><ol class="steps">${steps(type)}</ol>${rule(type)}</div>
+    </details></li>`,
   )
 }
 
-function showType(type) {
-  for (const card of typeList.children) card.classList.toggle('current', card.dataset.type === type)
-  for (const tab of typeTabs.children) tab.setAttribute('aria-current', tab.dataset.type === type)
-}
-
-typeTabs.addEventListener('click', (event) => {
-  const tab = event.target.closest('[data-type]')
-  if (tab) showType(tab.dataset.type)
+// Opening a tile closes the open one. If that one is above, the tapped tile would jump up:
+// Chrome's scroll anchoring makes up for it, Safari has none. So keep the tapped tile where it was.
+let tapped = null
+$('tiles').addEventListener('click', (event) => {
+  const summary = event.target.closest('summary')
+  if (summary) tapped = { summary, top: summary.getBoundingClientRect().top }
 })
+$('tiles').addEventListener(
+  'toggle',
+  (event) => {
+    if (!event.target.open || tapped?.summary.parentElement !== event.target) return
+    window.scrollBy(0, tapped.summary.getBoundingClientRect().top - tapped.top)
+    tapped = null
+  },
+  true, // toggle doesn't bubble
+)
 
 // ---------- Message field ----------
 
@@ -319,23 +332,16 @@ function showResult(answer) {
   const scam = answer.verdict === 'scam'
   art.hidden = !scam
   $('verdict-icon').hidden = scam
-  if (scam) {
-    art.innerHTML = spotted(type)
-    watch(art)
-  }
+  if (scam) art.innerHTML = spotted(type)
   $('spotted').hidden = !type
   if (type) $('spotted').textContent = named('result.spotted', type)
 
   $('headline').replaceChildren(...sentences(answer.headline))
-  $('reason').replaceChildren(...wrap(answer.reason, answer.link?.domain, document.createElement('mark')))
-
-  // Real or fake: the scam domain next to the site it imitates. Plain text, so people type the real address themselves.
-  const real = answer.link?.status === 'malicious' && answer.link.imitates
-  $('compare').hidden = !real
-  if (real) {
-    $('fake-domain').textContent = answer.link.domain
-    $('real-domain').textContent = real
-  }
+  // The reason names the scam domain and the real site it imitates: marked red and green, as plain text,
+  // so people type the real address themselves.
+  const { domain, imitates } = answer.link ?? {}
+  const mark = (part) => Object.assign(document.createElement('mark'), { className: part === domain ? 'fake' : 'real' })
+  $('reason').replaceChildren(...wrap(answer.reason, [domain, imitates], mark))
 
   $('steps').replaceChildren(...answer.next_steps.map((step) => Object.assign(document.createElement('li'), { textContent: step })))
 
@@ -343,22 +349,20 @@ function showResult(answer) {
   help.hidden = !answer.if_it_happened
   if (answer.if_it_happened) {
     // 116 116 is the German hotline for blocking bank cards: make it tappable.
-    const call = Object.assign(document.createElement('a'), { href: 'tel:116116' })
-    call.setAttribute('aria-label', t('result.call'))
-    help.replaceChildren(...wrap(answer.if_it_happened, '116 116', call))
+    const call = () => Object.assign(document.createElement('a'), { href: 'tel:116116', ariaLabel: t('result.call') })
+    help.replaceChildren(...wrap(answer.if_it_happened, ['116 116'], call))
   }
 
   setFeedback('ask')
 
   $('trick').hidden = !type
   if (type) {
-    $('trick-story').innerHTML = storyHTML(type, '<h2 data-i18n="result.trick"></h2>')
+    $('trick-story').innerHTML = storyHTML(type)
     translate($('trick-story'))
     watch($('trick-story'))
   }
 
   $('protect').hidden = answer.link?.status !== 'malicious' // known in our domain database
-  watch($('protect-art'))
   $('share').hidden = !type // a known, common scam is worth warning others about
   if (type) prepareShare(type)
 
@@ -373,12 +377,21 @@ function sentences(text) {
   })
 }
 
-// Split text around the first `part` and put that part into `node`.
-function wrap(text, part, node) {
-  const at = part ? text.indexOf(part) : -1
-  if (at < 0) return [text]
-  node.textContent = part
-  return [text.slice(0, at), node, text.slice(at + part.length)]
+// Split text around the given parts and put each one into a node from make(part). Longer parts
+// match first, so a real domain inside a fake one stays part of the fake one. A comma or full stop
+// right after a part stays on its line (.glued): after an inline-block it could start the next one.
+function wrap(text, parts, make) {
+  const found = parts.filter(Boolean).sort((a, b) => b.length - a.length)
+  if (!found.length) return [text]
+  const escaped = found.map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  const pieces = text.split(new RegExp(`(${escaped.join('|')})([.,:;]?)`)) // text, part, punctuation, text, …
+  const nodes = [pieces[0]]
+  for (let i = 1; i < pieces.length; i += 3) {
+    const glued = Object.assign(document.createElement('span'), { className: 'glued' })
+    glued.append(Object.assign(make(pieces[i]), { textContent: pieces[i] }), pieces[i + 1])
+    nodes.push(glued, pieces[i + 2])
+  }
+  return nodes
 }
 
 function showNotice() {
@@ -451,7 +464,5 @@ $('share-copy').addEventListener('click', async (event) => {
 
 $('checking-scene').innerHTML = CHECKING
 $('protect-art').innerHTML = BLOCKED
-showType(SCAM_TYPES[0])
 applyLanguage()
-for (const el of typeList.querySelectorAll('.story')) watch(el)
 autoGrow()

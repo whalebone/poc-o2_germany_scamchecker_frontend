@@ -1,8 +1,7 @@
 /* Animations for the cartoons in scenes.js.
-   Stories (9 s) and the result scenes play once when they come into view: main.js sets data-state on their
-   container (playing, paused, done) and `both` keeps the last frame. The loader follows data-phase.
-   Keyframe names start with the scene: p- parcel, a- account, f- family, g- Goldesel, r- romance,
-   b- spotted (result), k- blocked (Onlineschutz), ck- checking. */
+   A story (9 s) plays once when it comes into view: main.js sets data-state on its container
+   (playing, paused, done) and `both` keeps the last frame. The loader follows data-phase.
+   Keyframe names start with the scene: p- parcel, a- account, f- family, g- Goldesel, r- romance, ck- checking. */
 
 .sc {
   display: block;
@@ -438,106 +437,6 @@
 [data-state] .sc-account_phishing .d2 { animation-delay: 0.2s; }
 [data-state] .sc-account_phishing .d3 { animation-delay: 0.4s; }
 [data-state] .sc-account_phishing .d4 { animation-delay: 0.6s; }
-
-/* ---------- Result: spotted. Once, 1.3 s, no idle loop ----------
-   0–0.4 s he stands there smug with his prop while the Lupe glides in; then hands up, the prop drops. */
-
-.sc-spotted .b-jump { transform-origin: 50% 100%; }
-
-[data-state] .sc-spotted .b-lupe { animation: b-lupe 0.4s var(--ease) both; }
-@keyframes b-lupe {
-  from { opacity: 0; transform: translate(80px, -40px) rotate(-25deg); } /* mirrored: comes in from the left */
-  50% { opacity: 1; }
-}
-
-[data-state] .sc-spotted .b-smug { animation: b-smug 0.4s both; }
-@keyframes b-smug {
-  0%, 99% { opacity: 1; }
-  100% { opacity: 0; }
-}
-
-[data-state] .sc-spotted .b-shake { animation: b-caught 0.4s both, b-shake 0.45s 0.85s both; }
-@keyframes b-caught {
-  0%, 99% { opacity: 0; }
-  100% { opacity: 1; }
-}
-@keyframes b-shake {
-  20%, 60% { transform: rotate(-4deg); }
-  40%, 80% { transform: rotate(4deg); }
-}
-
-[data-state] .sc-spotted .b-prop { animation: b-prop 0.3s 0.4s ease-in both; }
-@keyframes b-prop {
-  0% { opacity: 0; transform: translate(12px, -14px); }
-  1% { opacity: 1; }
-}
-
-[data-state] .sc-spotted .b-jump { animation: b-jump 0.5s 0.4s both; }
-@keyframes b-jump {
-  40% { transform: translateY(-14px); }
-  75% { transform: scaleY(0.94); }
-}
-
-[data-state] .sc-spotted .b-lines { animation: b-lines 0.3s 0.5s both; }
-@keyframes b-lines {
-  from { opacity: 0; transform: scale(0.4); }
-}
-
-[data-state] .sc-spotted .b-drop { animation: b-drop 0.4s 0.8s both; }
-@keyframes b-drop {
-  from { opacity: 0; transform: translateY(-8px); }
-}
-
-/* ---------- Onlineschutz: he runs into the shield. Once, 3 s ---------- */
-
-.sc-blocked .k-run { transform-origin: 0 50%; }
-
-[data-state] .sc-blocked .k-run { animation: k-run 3s both; }
-@keyframes k-run {
-  0% { transform: translateX(120px); animation-timing-function: ease-in; }
-  24% { transform: translateX(-36px); }
-  28% { transform: translateX(-36px) scaleX(0.82); }
-  42% { transform: translate(4px, -10px) rotate(-10deg); }
-  54%, 100% { transform: rotate(-6deg); }
-}
-
-[data-state] .sc-blocked .k-shield { animation: k-shield 3s both; }
-@keyframes k-shield {
-  0%, 23%, 34%, 100% { transform: none; }
-  27% { transform: scale(1.1); }
-}
-
-[data-state] .sc-blocked .k-flash { animation: k-flash 3s both; }
-@keyframes k-flash {
-  0%, 23% { opacity: 0; transform: scale(0.8); }
-  26% { opacity: 1; }
-  40%, 100% { opacity: 0; transform: scale(1.3); }
-}
-
-[data-state] .sc-blocked .k-stars { animation: k-stars 3s ease-out both; }
-@keyframes k-stars {
-  0%, 44% { opacity: 0; transform: none; }
-  50% { opacity: 1; }
-  100% { opacity: 1; transform: rotate(360deg); }
-}
-
-[data-state] .sc-blocked .k-grin { animation: k-grin 3s both; }
-@keyframes k-grin {
-  0%, 24% { opacity: 1; }
-  26%, 100% { opacity: 0; }
-}
-
-[data-state] .sc-blocked .k-oh { animation: k-oh 3s both; }
-@keyframes k-oh {
-  0%, 24% { opacity: 0; }
-  26%, 100% { opacity: 1; }
-}
-
-[data-state] .sc-blocked .k-phone { animation: k-phone 3s both; }
-@keyframes k-phone {
-  0%, 28%, 38%, 100% { transform: none; }
-  33% { transform: translateY(-6px); }
-}
 
 /* ---------- Loader: read (0–1.7 s), link or tricks (to 3.5 s), think (until the answer), done ---------- */
 

@@ -1,4 +1,5 @@
-// Small SVG cartoons, animated with CSS in scenes.css. No words inside, so they work in both languages.
+// Small SVG cartoons. No words inside, so they work in both languages. Only the stories and the loader move
+// (CSS in scenes.css); the tile pictures, the spotted scene and the Onlineschutz picture are still.
 // The grammar of every story: your phone on the left is you, the Trickser on the right is him,
 // lila marks his things, and whatever moves to the right is lost. Each story ends with your coins at his feet.
 // at() places a part with a transform attribute; the class on the <g> inside it is what scenes.css animates
@@ -209,13 +210,13 @@ const STORIES = {
 // One scam type's story, for the landing page and the result.
 export const story = (type) => svg(type, '12 18 296 156', `<g class="story-sc">${STORIES[type]}</g>`)
 
-// The Trickser in his costume, for the tabs on desktop.
+// The Trickser in his costume: the picture on the landing page's scam tiles.
 const COSTUME = { parcel_scam: 'cap', account_phishing: 'beanie', fake_profit: 'tophat', romance_scam: 'bowtie' }
 export const avatar = (type) =>
   svg('avatar', '-46 -64 92 108', type === 'family_impersonation' ? trickster({ arms: 'stick', front: HELD_PLATE }) : trickster({ hat: COSTUME[type] }))
 
-// ---------- Result: the Lupe has spotted the Trickser. Plays once, in 1.3 s ----------
-// He stands there smug with his prop; the Lupe glides in (0–0.4 s); then his hands go up and the prop drops.
+// ---------- Result: the Lupe has spotted the Trickser. A still picture ----------
+// His hands are up and his prop lies on the ground.
 
 const PROP = {
   parcel_scam: BOX + LID,
@@ -227,20 +228,14 @@ const DROPPED = {
   ...Object.fromEntries(Object.entries(PROP).map(([type, prop]) => [type, at(140, type === 'account_phishing' ? 128 : 116, '', prop)])),
   family_impersonation: `<g transform="translate(140 126) scale(1 .3)">${PLATE}</g>`, // flat on the ground
 }
-const smug = (type) =>
-  type === 'family_impersonation'
-    ? trickster({ arms: 'stick', front: HELD_PLATE })
-    : trickster({ arms: PROP[type] ? 'hold' : 'down', hat: COSTUME[type], front: PROP[type] ? at(-44, 14, '', PROP[type]) : '' })
 
-// type null: a scam of no known type, so a plain Trickser with nothing to drop.
+// type null: a scam of no known type, so a plain Trickser with nothing dropped.
 export const spotted = (type) =>
-  svg('spotted', '54 22 202 118', `${shadow(196, 133, 30)}
-    <g class="b-prop">${DROPPED[type] ?? ''}</g>
-    ${at(196, 92, 'b-smug', smug(type), 'opacity="0"')}
-    ${at(196, 92, 'b-jump', `<g class="b-shake">${trickster({ arms: 'up', mouth: MOUTHS.oh, hat: COSTUME[type] })}</g>`)}
-    <g class="b-lines"><path d="M232 48L240 40M236 60H247M226 38L229 28" stroke="${INK}" stroke-width="3" stroke-linecap="round"/></g>
-    ${at(245, 76, 'b-drop', `<path d="M0-7C3-3 5 0 5 3A5 5 0 0 1-5 3C-5 0-3-3 0-7Z" fill="${LIGHT}" stroke="${DARK}" stroke-width="1.5"/>`)}
-    <g transform="translate(100 64) scale(-1 1)"><g class="b-lupe">${LUPE}</g></g>`)
+  svg('spotted', '54 22 202 118', `${shadow(196, 133, 30)}${DROPPED[type] ?? ''}
+    <g transform="translate(196 92)">${trickster({ arms: 'up', mouth: MOUTHS.oh, hat: COSTUME[type] })}</g>
+    <path d="M232 48L240 40M236 60H247M226 38L229 28" stroke="${INK}" stroke-width="3" stroke-linecap="round"/>
+    <path d="M245 69C248 73 250 76 250 79A5 5 0 0 1 240 79C240 76 242 73 245 69Z" fill="${LIGHT}" stroke="${DARK}" stroke-width="1.5"/>
+    <g transform="translate(100 64) scale(-1 1)">${LUPE}</g>`)
 
 // ---------- Loader: the Lupe reads the message, takes the link to the blocklist, then thinks ----------
 // main.js sets the phases (data-phase); the path below takes 3.5 s.
@@ -259,13 +254,11 @@ export const CHECKING = svg('check', '20 24 290 152', `
   <g class="ck-dots" opacity="0" fill="${BLUE}"><circle cx="252" cy="40" r="4"/><circle cx="266" cy="40" r="4"/><circle cx="280" cy="40" r="4"/></g>
   ${at(110, 74, 'ck-lupe', `<g class="ck-bob"><g class="ck-hop">${LUPE}</g></g>`)}`)
 
-// ---------- Onlineschutz: the Trickser runs into the shield in front of your phone. Plays once ----------
+// ---------- Onlineschutz: the shield in front of your phone. A still picture ----------
+// No Trickser here: the offer's hero is the shield, and the result already shows him twice.
 
-export const BLOCKED = svg('blocked', '20 10 270 100', `
-  <g transform="translate(30 20) scale(.72)"><g class="k-phone">${phone(`
+export const BLOCKED = svg('blocked', '20 10 150 100', `
+  <g transform="translate(30 20) scale(.72)">${phone(`
     <circle cx="24" cy="50" r="3.5" fill="${BLUE}"/><circle cx="40" cy="50" r="3.5" fill="${BLUE}"/>
-    <path d="M21 61Q32 72 43 61" fill="none" stroke="${BLUE}" stroke-width="4" stroke-linecap="round"/>`)}</g></g>
-  ${at(128, 60, 'k-shield', SHIELD)}
-  <circle class="k-flash" cx="128" cy="60" r="44" fill="none" stroke="#fff" stroke-width="3" opacity="0"/>
-  ${at(236, 70, 'k-run', trickster({ mouth: `<g class="k-grin" opacity="0">${MOUTHS.grin}</g><g class="k-oh">${MOUTHS.oh}</g>` }))}
-  ${at(236, 26, 'k-stars', `${at(-16, 4, '', SPARK)}${at(16, 4, '', SPARK)}${at(0, -8, '', SPARK)}`)}`)
+    <path d="M21 61Q32 72 43 61" fill="none" stroke="${BLUE}" stroke-width="4" stroke-linecap="round"/>`)}</g>
+  <g transform="translate(128 60)">${SHIELD}</g>`)

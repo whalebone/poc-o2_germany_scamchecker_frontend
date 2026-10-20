@@ -1,6 +1,6 @@
 # O₂ Scam-Check: product context and UX decisions
 
-Read this before UI or UX work. It holds what the page is built on: the brief, the backend proposal, the O₂ Onlineschutz facts and the decisions from the product-designer reviews of round 1 (2026-10-19) and round 2 (2026-10-20). Update it when a decision changes, so the next session doesn't redo the research.
+Read this before UI or UX work. It holds what the page is built on: the brief, the backend proposal, the O₂ Onlineschutz facts and the decisions from the product-designer reviews of round 1 (2026-10-19), round 2 and round 3 (both 2026-10-20). Update it when a decision changes, so the next session doesn't redo the research.
 
 ## The product
 
@@ -34,6 +34,14 @@ Round 2 (feedback on the deployed round 1, 2026-10-20):
 - Drop „Kostenlos. Wir öffnen keine Links.“, the footer „Scam‑Check ersetzt keinen Virenschutz.“ and "Opens a page in German".
 - The empty landing page gets scrolling information on the five threat types.
 
+Round 3 (feedback on the deployed round 2, 2026-10-20):
+- "A bit too busy overall": animation only for „So läuft der Trick“ on the result. None in the verdict card, the Onlineschutz card or on the landing page.
+- The verdict headline becomes the title of the right half of the verdict card.
+- No „Echt oder Fake?“ block: the description should say it in natural language.
+- A more dominant description; it was "some weird small text".
+- The landing page: 5 image tiles "for expansion", with an image placeholder.
+- Improve the main message and the placeholder text.
+
 ## Backend proposal (from the brief; not built)
 
 `POST /v1/scam-check` with `{ "text": "…", "language": "de" }`. The target is an answer in under 5 s.
@@ -44,12 +52,13 @@ Round 2 (feedback on the deployed round 1, 2026-10-20):
 | `verdict` | `scam` · `caution` · `ok` | tone of the verdict card (`data-verdict`) |
 | `type` | `parcel_scam` · `account_phishing` · `family_impersonation` · `fake_profit` · `romance_scam` · `null` | a known type shows the Trickser in its costume, the „Durchschaut“ tag, its story and the share card |
 | `headline` | "Finger weg. Das ist Betrug." | verdict |
-| `reason` | 1–3 short sentences | why; the domain gets highlighted |
+| `reason` | 2–3 short sentences | the main message under the headline; `link.domain` and `link.imitates` in it get marked |
 | `link` | `{ domain, owner, status: malicious · legit · unknown, imitates }` or `null` | `malicious` shows the Onlineschutz card; `owner` isn't used |
-| `link.imitates` | `"zoll.de"` or `null` (**new in round 2**) | the real site the link pretends to be: „Echt oder Fake?“ shows the scam domain next to it |
+| `link.imitates` | `"zoll.de"` or `null` (**new in round 2**) | the real site the link pretends to be: marked green in the reason |
 | `next_steps` | 1–2 strings | "So bleibst du sicher", numbered |
 | `if_it_happened` | string or `null` | the help line; "116 116" becomes a `tel:` link |
 
+- **The `reason` contract** (round 3): 2–3 sentences. Who the message pretends to be, where the link really goes (with `link.domain` and `link.imitates` written exactly as sent; case matters), what they're after. A domain that isn't in the text just isn't marked.
 - **Dropped from the brief's demo:** the follow-up question with answer buttons, and the tip.
 - **Type names from the deck**, shown on the page since round 2: Paket‑Trickser, Konto‑Knacker, Hallo‑Mama‑Schwindler, Goldesel, Liebes‑Lügner. English: Parcel Trickster, Account Cracker, Hi‑Mum Faker, Golden Goose, Love Liar.
 - **Share texts** exist only for `parcel_scam`. Write `share.subject.*` and `share.message.*` for the other four before the real backend sends them.
@@ -82,24 +91,25 @@ Round 2 (feedback on the deployed round 1, 2026-10-20):
 3. **Slot below the form** shows one of:
    - the checking card: the Lupe reads the message, takes the link to the blocklist book, thinks; one caption line per phase
    - the result:
-     - the verdict card: the "spotted" scene (the Lupe has caught the Trickser in the type's costume), the „Durchschaut: Paket‑Trickser“ tag, the headline, the reason, „Echt oder Fake?“, numbered steps, the 116 116 help line and the feedback
-     - „So läuft der Trick“: the type's story
-     - the Onlineschutz card (the Trickser bounces off the shield), the share card and "Andere Nachricht prüfen"
+     - the verdict card: a pink head with a still picture (the Lupe has caught the Trickser in the type's costume) and the „Durchschaut: Paket‑Trickser“ caption; then the headline, the reason (it names the scam domain and the real site, marked red and green), numbered steps, the 116 116 help line and the feedback
+     - the Onlineschutz card (a still: your phone behind the shield)
+     - „So läuft der Trick“: the type's story, the only cartoon that moves on the result
+     - the share card and "Andere Nachricht prüfen"
    - the demo notice for any text other than the example
-4. **„Kennst du diese Maschen?“** below the slot, only while the slot is empty: the five stories stacked.
+4. **„Kennst du diese Maschen?“** below the slot, only while the slot is empty: five still tiles (picture, name, one line). A tap opens one: its three steps and the rule.
 5. **Screenshot popup:** a native `<dialog>`.
 
 **Desktop (from 1024 px):** full-width rows, one thing at a time, no tiles side by side.
 1. A compact hero (H1 64 px, the lead on one line, a small bubble in the free dark area).
 2. One wide composer card overlapping the hero: the field (3 rows, growing to 8) and "Jetzt prüfen" to its right, bottom-aligned.
-3. Below it, either the scam types as one master-detail card (the five as a list with costume avatars and names on the left, the chosen story on the right), or the checking card (the drawing centred, at most 720 px), or the result.
-4. The result as full-width cards, each split in two halves of the same height: verdict (pink head with the spotted scene, tag and headline / the explanation), Onlineschutz (scene / words and button), the trick (scene / steps and rule), share as a slim band.
+3. Below it, either the scam tiles (3 + 2, the second row centred), or the checking card (the drawing centred, at most 720 px), or the result.
+4. The result as full-width cards, each split in two halves of the same height: verdict (pink half with the still picture and its caption / the headline as title, the reason, steps, help, feedback), Onlineschutz (phone and shield / words and button), the trick (scene / steps and rule), share as a slim band.
 
-**A story** (landing page and result): a cartoon of 9 s in three beats, the three steps under it as a little diagram (① — ② — ③, lit in step with the beats), and one rule to remember with a tick.
+**A story** (on the result only, since round 3): a cartoon of 9 s in three beats, the three steps under it as a little diagram (① — ② — ③, lit in step with the beats), and one rule to remember with a tick.
 
 ## UX decisions and why
 
-Keep these unless you have a reason to change them. Round 1 comes first (the designer's verdict after its third review: ship as an internal PoC); **round 2** below adds to it and wins where they differ.
+Keep these unless you have a reason to change them. Round 1 comes first (the designer's verdict after its third review: ship as an internal PoC); **rounds 2 and 3** below add to it, and the later round wins where they differ.
 
 **Flow**
 - One task. The H1 is the user's own question, so it fits any verdict. Phones get one column; desktop gets two since round 2.
@@ -206,10 +216,10 @@ The designer's verdict on the concept: go with changes; on the build: ship once 
   - Hallo Mama: a "?" number with a heart → "?" with € and a clock, the plate face wobbles → your coins fly, the plate falls flat.
   - Goldesel: his crayon hops from his hand into your phone along a dotted arc and draws a chart that only goes up → you pay in, his sack grows, the crayon keeps drawing, then hops back → he runs off with the sack, the chart crashes.
   - Liebes‑Lügner: hearts between your phone and a photo (his lila fingertips on both edges, his bandana tail peeking out) → „€?“, you send coins → the photo tips over, it was him, the heart breaks.
-- **Play once, pausable** (WCAG 2.2.2, binding through the BFSG). A story plays once when it is fully in view (95 %, or 80 % of a short screen), so nobody gets a half-seen start at the bottom edge, and rests on its last frame with all steps lit. Its 48 px button sits next to the heading, outside the drawing, and reads Pause / Abspielen / Nochmal ansehen. Leaving the screen mid-play resets it. The spotted scene (1.3 s) and the Onlineschutz scene (3 s) play once, without a button.
+- **Play once, pausable** (WCAG 2.2.2, binding through the BFSG). A story plays once when it is fully in view (95 %, or 80 % of a short screen), so nobody gets a half-seen start at the bottom edge, and rests on its last frame with all steps lit. Its 48 px button sits next to the heading, outside the drawing, and reads Pause / Abspielen / Nochmal ansehen. Leaving the screen mid-play resets it. Round 2's spotted scene (1.3 s) and Onlineschutz scene (3 s) are stills since round 3.
 - **Reduced motion:** nothing plays and there is no button. Each scene shows its last frame, which tells the most (him with the loot; in Goldesel he has already left), and all steps are lit. The loader stays still.
-- **Phones stack the five stories.** The owner asked for scrolling, most people never swipe a carousel, and a peeking next card shrinks the scene. **Desktop** shows one at a time: the five as a list (56 px costume avatar and name) next to the chosen story. The active row gets a Blue Soft fill and a Beyond Blue ring, so there is still one filled button per view.
-- The stories hide while the slot shows anything and come back with "Andere Nachricht prüfen": under a result they'd dilute the Onlineschutz moment, and the result has its own story.
+- **Landing page:** round 2 stacked the five stories on phones and showed them one at a time on desktop. Round 3 replaced both with still tiles (below). Still true: no carousel, because most people never swipe one.
+- The landing section hides while the slot shows anything and comes back with "Andere Nachricht prüfen": under a result it would dilute the Onlineschutz moment, and the result has its own story.
 
 **Loader**
 - Phases set by `main.js`: read (1.7 s) → link (1.8 s) → think (until the answer) → done (0.7 s). The Lupe's path takes the first 3.5 s, which is also the minimum on screen for a fresh check: a quick answer still shows the work (labour illusion). The refetch after a language switch keeps the old card and shows no loader.
@@ -219,9 +229,9 @@ The designer's verdict on the concept: go with changes; on the build: ship once 
 
 **Result**
 - „Durchschaut: Paket‑Trickser“, not „Erwischt“: "caught" suggests the danger is over while the SMS is still in the inbox.
-- The spotted scene in cause-and-effect order: he stands there smug with his prop while the Lupe glides in (0–0.4 s); then his hands go up and the prop drops.
-- „Echt oder Fake?“, not a quiz they can fail: the scam domain with a red cross and "Fake", the real site with a green tick and "Echt". The real site is plain text, not a link: step 1 says don't tap links, and typing the address yourself is the habit we teach. Long domains wrap; the tag stays.
-- The reason no longer names the domain (the block shows it) and gets a little grin: „Die 2,99 € sind nur der Köder …“.
+- The spotted picture: his hands are up and his prop lies on the ground while the Lupe looks at him. Round 2 animated it; it's a still since round 3.
+- Round 2's „Echt oder Fake?“ block (the scam domain with a red cross, the real site with a green tick) is folded into the reason since round 3. The real site stays plain text, not a link: step 1 says don't tap links, and typing the address yourself is the habit we teach.
+- The reason gets a little grin: „Die 2,99 € sind nur der Köder …“.
 - `verdict: scam` with `type: null`: the plain Trickser, no tag, no story, no share card.
 - The verdict scene is at most 120 px tall on phones, so step 1 of „So bleibst du sicher“ stays on the first screen at 390×844.
 - The share card names the type: „Der Paket‑Trickser ist gerade viel unterwegs.“
@@ -230,8 +240,7 @@ The designer's verdict on the concept: go with changes; on the build: ship once 
 - From 1024 px; 720–1023 px stays one wide column.
 - **Full-width rows, not side-by-side tiles.** The first desktop build put the form left and everything else right: two tiles of unequal height, a long empty left column on the result, and the bubble half covered. The owner called it "meh". Each block is now one full-width card; where a card has two parts, it splits them into halves of the same height.
 - **Onlineschutz straight after the verdict**, as a band, not a sticky box in a side rail: a rail reads like an ad, and next to a scam warning like a sales pitch. At 1440×900 it is one short scroll away.
-- The verdict head is top-aligned in its pink half: centred, the headline fell below the fold at 1024×768.
-- The master-detail list is at least 320 px wide, so „Hallo‑Mama‑Schwindler“ fits next to its avatar at 1024 px. Its rows are buttons with `aria-current`; the active one gets a Blue Soft fill and a Beyond Blue ring.
+- Round 2 top-aligned the verdict head, because the headline sat in it and fell below the fold at 1024×768 when centred. Since round 3 the headline heads the white half and the picture is centred in the pink half.
 - On check, the page scrolls only as far as the loader needs (`nearest`); phones still move the slot to the top.
 - The bubble is 190 px and sits between the language switch and the composer, behind no text.
 - Ctrl/Cmd+Enter in the field checks the message.
@@ -244,7 +253,55 @@ The designer's verdict on the concept: go with changes; on the build: ship once 
 **More measured limits**
 - Steps: three columns of about 92 px at 360 px; each label has two lines reserved, so nothing jumps while they light up.
 - The longest name, „Hallo‑Mama‑Schwindler“ at 22 px, is about 250 px: it fits a 296 px card.
-- Desktop stories are 280 px tall, so the rule stays on a 900 px screen; 220 px on windows up to 860 px tall.
+- The trick's story is 280 px tall on desktop, so the rule stays on a 900 px screen; 220 px on windows up to 860 px tall.
+
+### Round 3 (2026-10-20)
+
+The designer's verdict on the concept: go with changes (all four MUSTs taken); on the build: SHIP, with most SHOULDs and COULDs taken.
+
+**Less motion**
+- On the result only „So läuft der Trick“ moves, and the loader moves while checking. The owner asked for a fun wait in round 2 and didn't mention it now; ask before stilling it.
+- The spotted scene and the Onlineschutz picture are stills; their keyframes are gone from `scenes.css`.
+- The Onlineschutz picture is your phone behind the shield, without the Trickser. The result showed him three times, and the hero of an O₂ offer is the shield, not the villain.
+
+**Verdict card**
+- The pink half (top on phones, left on desktop) holds the still picture with the „Durchschaut: …“ caption under it, centred. Desktop screens up to 860 px tall top-align it, so the caption stays above the fold at 1024×768.
+- The white half opens with the headline as its title: 26 px on phones, 34 px on desktop.
+- The reason is the main message: 18 px on phones, 20 px on desktop, ink, line height 1.45.
+- It replaces „Echt oder Fake?“ by naming both domains: the scam domain with the red mark, the real site with a green mark (`#DDF7EA`, ink text). Never use `#00DC7D` as a text colour: it's 1.9:1 on white. The words („nicht zum echten“) carry the meaning, so colour isn't the only signal (WCAG 1.4.1).
+- The marks have 2 px of padding on each side. More looked like a double space before them, or like an indent at the start of a line.
+- A mark and the comma or full stop right after it sit in a `nowrap` span (`.glued`). After an inline-block, Chrome wrapped the comma to the next line at 167–171 and 321–325 px.
+- The steps are 18 px, as large as the reason, with 24 px above „So bleibst du sicher“, so the actions don't look secondary.
+
+**Landing page tiles**
+- Five still tiles replace the stories. Each is a `<details name="scam-types">`, so one opens at a time without JavaScript.
+  - Closed: a picture slot, the name, one line and a blue „So läuft der Trick“ with O₂'s plus icon, which turns into a cross when open. O₂'s arrows are heavy block arrows that read as "download", and there is no chevron.
+  - Open: the three steps as a numbered list and the rule, without a cartoon.
+  - White cards with a picture look tappable, so they do something. "For expansion" in the owner's words.
+- The picture is a placeholder until there are real images: the Trickser in the type's costume.
+  - Phones: a 72 px square left of the text.
+  - Desktop: 2:1 on top, so real images can drop in without moving anything, and the second row starts on a 900 px screen.
+  - Real images must follow the brand image rules: no hooded-hacker stock photos.
+- Phones and up to 1023 px: one tile per row.
+- Desktop: 3 + 2, the second row centred on a 6-column grid. Five across would leave about 147 px for „Hallo‑Mama‑Schwindler“ at 1024 px.
+  - `align-items: start`, so an open tile doesn't stretch its neighbours.
+  - The line has two lines reserved, so closed tiles in a row end level.
+- The tiles don't use `.card`: its padding from 720 px would sit around the summary. The line under the name is a `span`, because `<summary>` takes no `<p>`.
+- Opening a tile closes the open one; if that one is above, the tapped tile would jump up. Chrome's scroll anchoring makes up for it, Safari has none, so `main.js` scrolls the difference back. Still to check on a real iPhone.
+- Not taken: a sixth desktop tile linking back to the field („Andere Masche? Prüf sie oben.“) to fill 3 + 3.
+
+**Copy**
+- Lead: „Füg die Nachricht ein. In Sekunden weißt du, ob du ihr trauen kannst.“ (a no-break space after „weißt“, so phones don't break before „du“) / "Paste the message. In seconds, you’ll know if you can trust it." It names the outcome in the user's words and fits all three verdicts.
+- Placeholder, two lines of at most 31 characters: „Die ganze Nachricht einfügen,↵aus SMS, E‑Mail oder WhatsApp.“ / "Paste the whole message,↵from a text, email or WhatsApp."
+  - „einfügen“ / "Paste" is the word in the phone's own paste menu.
+  - It doesn't mention the link: „gern mit Link“ nudged people to copy the link itself, and a long press on a link can open a preview that loads the page on an iPhone.
+  - Each line still reads as a sentence if a browser drops the line break.
+- Tile lines are `scam.*.text` in `strings.js`. Goldesel says „angeblich ohne Risiko“ / "supposedly risk-free", so it doesn't read as our own promise.
+
+**Measured limits**
+- Tile names on phones are 17 px: „Hallo‑Mama‑Schwindler“ (about 193 px) fits the about 214 px next to the 72 px picture at 360 px.
+- Desktop tiles are about 304 px wide at 1024 px, so the name at 20 px fits.
+- At 1024×768 the verdict picture is 200 px tall and fills the pink half's width. Don't make it taller.
 
 ## Open items
 
@@ -257,11 +314,11 @@ Before anyone outside the team gets the link:
 
 Next iteration:
 - **Real API:** error and timeout states with copy, plus designs for the `caution` (orange) and `ok` (green) verdicts.
-- **Tracking:** example vs. own text, each check, the verdict, feedback and its reason, Onlineschutz clicks, shares, and taps on the screenshot button. These answer the PoC's questions. Since round 2 also: stories watched to the end, pauses, replays and desktop tab clicks.
+- **Tracking:** example vs. own text, each check, the verdict, feedback and its reason, Onlineschutz clicks, shares, and taps on the screenshot button. These answer the PoC's questions. Since round 2 also: stories watched to the end, pauses and replays; since round 3: which tiles get opened.
 - **Share texts** for the four types other than `parcel_scam`.
 - **Animation smoothness** on a low-end Android phone.
 - **Second example:** a scam without a link („Hallo Mama“).
-- **Accessibility audit:** axe or Lighthouse, plus a VoiceOver run.
+- **Accessibility audit:** axe or Lighthouse, plus a VoiceOver run, including the tiles (`<summary>` reads as one button).
 
 ## How to iterate
 

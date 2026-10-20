@@ -2,7 +2,7 @@
 
 Frontend-only PoC for the O₂ Germany Scam Checker: a static site built with Vite (plain HTML, CSS and JavaScript) and hosted on Netlify. The backend is a separate project — nothing server-side lives in this repo.
 
-Status: demo page with one example flow (a fake customs/parcel SMS), in German and English, with animated explainers for the five common scam types. Separate layouts for phones (one column) and desktop (from 1024 px: a wide composer, then full-width split cards). The backend is mocked in `src/demo.js`.
+Status: demo page with one example flow (a fake customs/parcel SMS), in German and English. The landing page shows the five common scam types as still tiles that open on tap; the result explains the detected type with an animated story. Separate layouts for phones (one column) and desktop (from 1024 px: a wide composer, then full-width split cards). The backend is mocked in `src/demo.js`.
 
 **Before any UI or UX work, read `docs/product.md`.** It holds:
 - the product goal and the owner's requirements
@@ -47,7 +47,7 @@ On Windows, `runapp.bat` starts the dev server in the background and opens the b
 - `src/main.js` — JavaScript entry (imports `style.css`): language, check flow, result, feedback, share
 - `src/strings.js` — every visible text, German (`de`) and English (`en`) with the same keys
 - `src/demo.js` — stand-in for the backend: the example message and its answer (`POST /v1/scam-check`), feedback logging (`POST /v1/feedback`)
-- `src/scenes.js` — the cartoons as inline SVG strings: the five scam stories, the loader, the "spotted" result scene, the Onlineschutz scene, the desktop tab avatars
+- `src/scenes.js` — the cartoons as inline SVG strings: the five scam stories, the loader, the still "spotted" picture, the still Onlineschutz picture, the tile avatars
 - `src/scenes.css` — their keyframes; stories play once via `data-state` (set in `main.js`), the loader via `data-phase`
 - `src/style.css` — styles, mobile first
 - `public/` — static files served as-is from the site root: On Air fonts, O₂ icons and logo, the hero bubble, `og.jpg` (link preview)
@@ -66,7 +66,7 @@ On Windows, `runapp.bat` starts the dev server in the background and opens the b
 
 ## Backend hand-over
 
-`src/demo.js` returns only the key fields of the proposed response: `request_id`, `verdict`, `type`, `headline`, `reason`, `link { domain, status, imitates }`, `next_steps`, `if_it_happened`. To go live, replace `checkMessage()` and `sendFeedback()` with `fetch` calls and drop `isExample()` and the demo notice. `link.status === 'malicious'` (known in the domain database) shows the Onlineschutz upsell; a known `type` (one of the five in `SCAM_TYPES`) shows the Trickser in its costume, its story and the share card; `link.imitates` (the real site, e.g. `zoll.de`) shows „Echt oder Fake?“. The page keeps the loader on screen for at least 3.5 s.
+`src/demo.js` returns only the key fields of the proposed response: `request_id`, `verdict`, `type`, `headline`, `reason`, `link { domain, status, imitates }`, `next_steps`, `if_it_happened`. To go live, replace `checkMessage()` and `sendFeedback()` with `fetch` calls and drop `isExample()` and the demo notice. `link.status === 'malicious'` (known in the domain database) shows the Onlineschutz upsell; a known `type` (one of the five in `SCAM_TYPES`) shows the Trickser in its costume, its story and the share card; `link.imitates` (the real site, e.g. `zoll.de`) and `link.domain` get marked green and red where the `reason` names them. The page keeps the loader on screen for at least 3.5 s.
 
 ## Design: o2-design skill
 

@@ -30,7 +30,7 @@
   --soft: #f3f3f5;
   --danger: #d42e50; /* status error; 4.9:1 on white, so it works for text */
   --danger-soft: #fff0f3;
-  --green: #00dc7d; /* O₂ accent, only behind the "real" tick (ink on it is 12:1) */
+  --green-soft: #ddf7ea; /* a tint of the O₂ accent green, only behind the real site in the reason */
   --gradient: linear-gradient(180deg, #00008c 0%, #0050ff 80%, #246cff 100%); /* functional Blauverlauf */
   --shadow: 0 4px 16px rgb(0 0 30 / 0.08);
   --radius: 20px;
@@ -129,7 +129,7 @@ a {
 }
 .i-camera { --icon: url('/icons/camera.svg'); }
 .i-close { --icon: url('/icons/close.svg'); }
-.i-cross { --icon: url('/icons/cross.svg'); }
+.i-add { --icon: url('/icons/add.svg'); }
 .i-info { --icon: url('/icons/info.svg'); }
 .i-search { --icon: url('/icons/search.svg'); }
 .i-share { --icon: url('/icons/share.svg'); }
@@ -467,8 +467,10 @@ main {
   --tone-soft: var(--danger-soft);
 }
 
+/* The tinted head: the still picture with the type as its caption (or the icon). */
 .verdict-head {
   display: grid;
+  justify-items: center;
   gap: 12px;
   padding: 20px 20px 18px;
   background: var(--tone-soft);
@@ -495,7 +497,6 @@ main {
 }
 
 .spotted {
-  justify-self: start;
   padding: 4px 12px;
   border-radius: 999px;
   background: #fff;
@@ -504,6 +505,7 @@ main {
 }
 
 #headline {
+  margin-bottom: -6px;
   font-size: 26px; /* near-black: red stays for the icon and the tint */
   line-height: 1.1;
 }
@@ -522,82 +524,43 @@ main {
   padding: 18px 20px 20px;
 }
 
+/* The why, in full sentences: the main message after the headline. */
+#reason {
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+/* The scam domain red, the real site it imitates green. Plain text, never links. */
 #reason mark {
-  display: inline-block; /* the domain moves to the next line as a whole */
-  padding: 0 1px 0 4px; /* a full stop right after it must not look detached */
+  display: inline-block; /* a domain moves to the next line as a whole */
+  padding: 0 2px; /* more would look like a double space before it, or an indent at a line start */
   border-radius: 6px;
-  background: #ffe3ea;
-  color: #b0122a;
   font-weight: 700;
   overflow-wrap: anywhere;
 }
 
-.verdict h3 {
-  margin-bottom: -4px;
-  font-size: 18px;
+#reason .fake {
+  background: #ffe3ea;
+  color: #b0122a;
 }
 
-/* Real or fake: the scam domain next to the real site. Long domains wrap, the tag stays. */
-.compare {
-  display: grid;
-  gap: 8px;
-}
-
-.compare h3 {
-  margin-bottom: 0;
-}
-
-.compare-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: var(--soft);
-}
-
-.compare .mark {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-}
-
-.compare .mark .icon {
-  width: 18px;
-  height: 18px;
-}
-
-.fake .mark {
-  background: var(--danger);
-  color: #fff;
-}
-
-.real .mark {
-  background: var(--green);
+#reason .real {
+  background: var(--green-soft);
   color: var(--ink);
 }
 
-.compare-domain {
-  flex: 1;
-  min-width: 0;
-  font-weight: 700;
-  overflow-wrap: anywhere;
+/* A marked part and the comma or full stop right after it stay on one line (main.js). */
+.glued {
+  white-space: nowrap;
 }
 
-.fake .compare-domain {
-  color: #b0122a;
+.glued > * {
+  white-space: normal;
 }
 
-.compare-tag {
-  flex: none;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: #fff;
-  font-size: 13px;
-  font-weight: 700;
+.verdict h3 {
+  margin: 8px 0 -4px; /* 24 px above: the actions are no afterthought */
+  font-size: 18px;
 }
 
 .steps {
@@ -614,6 +577,10 @@ main {
   gap: 12px;
   counter-increment: step;
   font-weight: 700;
+}
+
+.verdict .steps li {
+  font-size: 18px; /* as large as the reason above */
 }
 
 .steps li::before {
@@ -725,11 +692,6 @@ main {
   gap: 12px;
 }
 
-.type-card h3 {
-  font-size: 22px;
-  line-height: 1.15;
-}
-
 .scene-toggle {
   position: relative;
   display: grid;
@@ -822,7 +784,7 @@ main {
   color: var(--blue);
 }
 
-/* ---------- The five scam types (below the form until something is checked) ---------- */
+/* ---------- The five scam types (below the form until something is checked): still tiles ---------- */
 
 .types {
   display: grid;
@@ -839,18 +801,96 @@ main {
   font-size: 26px;
 }
 
-.type-list {
+.tiles {
   display: grid;
-  gap: 16px;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.type-card {
+/* A white card holding a <details>: the whole closed tile is its summary, so all of it can be tapped.
+   No .card class: its padding would sit around the summary. */
+.tile {
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: var(--shadow);
+}
+
+.tile summary {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  grid-template-rows: 1fr auto auto auto 1fr;
+  column-gap: 14px;
+  row-gap: 4px;
+  padding: 12px 16px 12px 12px;
+  border-radius: var(--radius);
+  list-style: none;
+  cursor: pointer;
+}
+
+.tile summary::-webkit-details-marker {
+  display: none;
+}
+
+/* A placeholder until there are real images: the Trickser in the type's costume. */
+.tile-img {
+  position: relative;
+  grid-row: 1 / -1;
+  align-self: center;
+  aspect-ratio: 1;
+  border-radius: 14px;
+  background: var(--blue-soft);
+}
+
+/* Placed absolutely, so the drawing never sets the slot's size; the viewBox keeps it centred. */
+.tile-img .sc {
+  position: absolute;
+  top: 12%;
+  height: 76%;
+}
+
+.tile h3 {
+  grid-row: 2;
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.tile-text {
+  display: block; /* a span: <summary> takes no <p> */
+  text-wrap: pretty;
+  grid-row: 3;
+  color: var(--ink-2);
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.tile-more {
+  grid-row: 4;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  color: var(--blue);
+  font-size: 15px;
+  font-weight: 700;
+  transition: color 200ms var(--ease);
+}
+
+.tile-more .icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 200ms var(--ease);
+}
+
+[open] .tile-more .icon {
+  transform: rotate(45deg); /* the plus becomes a cross */
+}
+
+.tile-body {
   display: grid;
   gap: 14px;
-}
-
-.type-tabs {
-  display: none;
+  padding: 4px 16px 16px;
 }
 
 .share {
@@ -921,7 +961,7 @@ main {
   color: var(--ink-2);
 }
 
-.tile {
+.sheet-icon {
   display: grid;
   place-items: center;
   width: 56px;
@@ -931,7 +971,7 @@ main {
   color: var(--blue);
 }
 
-.tile .icon {
+.sheet-icon .icon {
   width: 28px;
   height: 28px;
 }
@@ -968,17 +1008,14 @@ main {
     background: var(--blue-soft);
   }
 
+  .tile summary:hover .tile-more {
+    color: var(--blue-dark);
+  }
+
   .scene-toggle:hover {
     color: var(--blue-dark);
   }
 
-  .type-tab:hover {
-    background: var(--soft);
-  }
-
-  .type-tab[aria-current='true']:hover {
-    background: var(--blue-soft);
-  }
 }
 
 /* ---------- Larger screens ---------- */
@@ -1115,13 +1152,21 @@ main {
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
   }
 
-  /* Top-aligned: centred, the headline would drop below the fold on a laptop. */
+  /* The picture centred in the pink half; the headline heads the other half. */
   .verdict-head {
-    align-content: start;
+    align-content: center;
   }
 
   .verdict-art .sc {
     height: 200px;
+  }
+
+  #headline {
+    font-size: 34px;
+  }
+
+  #reason {
+    font-size: 20px;
   }
 
   .protect {
@@ -1163,8 +1208,7 @@ main {
   .trick .beats { grid-area: beats; }
   .trick .rule { grid-area: rule; }
 
-  .trick .sc,
-  .type-card .sc {
+  .trick .sc {
     height: 280px;
   }
 
@@ -1189,79 +1233,81 @@ main {
     width: auto;
   }
 
-  /* The scam types in one card: the five as a list on the left, the chosen story on the right. */
+  /* The scam tiles: 3 + 2, centred. Five across would leave too little room for „Hallo‑Mama‑Schwindler“ at 1024 px. */
   .types {
-    grid-template-columns: minmax(320px, 1fr) minmax(0, 2fr);
-    column-gap: 32px;
-    row-gap: 20px;
+    gap: 20px;
     margin-top: 8px;
-    padding: 32px;
-    border-radius: var(--radius);
-    background: #fff;
-    box-shadow: var(--shadow);
   }
 
   .types > h2 {
-    grid-column: 1 / -1;
     padding: 0;
+    font-size: 30px;
   }
 
-  .type-tabs {
-    display: grid;
-    align-content: start;
-    gap: 8px;
+  /* align-items: start, so an open tile doesn't stretch its neighbours. */
+  .tiles {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    align-items: start;
+    gap: 20px;
   }
 
-  .type-tab {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    width: 100%;
-    padding: 8px 16px 8px 8px;
-    border: 0;
-    border-radius: 16px;
-    background: none;
-    color: var(--ink);
-    font-size: 17px;
-    font-weight: 700;
-    text-align: left;
-    transition:
-      background-color 200ms var(--ease),
-      box-shadow 200ms var(--ease);
+  .tile {
+    grid-column: span 2;
   }
 
-  .type-tab .sc {
-    flex: none;
-    width: 56px;
-    height: 56px;
-    padding: 4px;
-    border-radius: 50%;
-    background: var(--blue-soft);
+  .tile:nth-child(4) {
+    grid-column: 2 / span 2;
   }
 
-  .type-tab[aria-current='true'] {
-    background: var(--blue-soft);
-    box-shadow: inset 0 0 0 2px var(--blue);
+  .tile summary {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    row-gap: 6px;
+    padding: 16px 20px 20px 16px;
   }
 
-  .type-tab[aria-current='true'] .sc {
-    background: #fff;
+  /* A fixed 2:1, so real images can drop in later without moving anything; flat enough that
+     the second row starts on a 900 px screen. */
+  .tile-img {
+    grid-row: auto;
+    aspect-ratio: 2 / 1;
+    margin-bottom: 10px;
   }
 
-  .type-card {
-    padding: 0;
-    box-shadow: none;
+  .tile-img .sc {
+    top: 14%;
+    height: 72%;
   }
 
-  .type-card:not(.current) {
-    display: none;
+  .tile h3,
+  .tile-text,
+  .tile-more {
+    grid-row: auto;
+    padding-left: 4px;
+  }
+
+  .tile h3 {
+    font-size: 20px;
+  }
+
+  .tile-text {
+    min-height: calc(2 * 1.35em); /* two lines, so closed tiles in a row end level */
+    font-size: 16px;
+  }
+
+  .tile-body {
+    padding: 0 20px 24px;
   }
 }
 
 /* Laptops: steps and rule stay above the fold. */
 @media (min-width: 1024px) and (max-height: 860px) {
-  .trick .sc,
-  .type-card .sc {
+  /* Top-aligned, so the type's caption stays above the fold too. */
+  .verdict-head {
+    align-content: start;
+  }
+
+  .trick .sc {
     height: 220px;
   }
 }

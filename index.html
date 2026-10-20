@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#00008c" />
     <title>Ist das Betrug? · O₂ Scam-Check</title>
-    <meta name="description" content="Füg die Nachricht ein. Wir sagen dir in Sekunden, woran du bist." />
+    <meta name="description" content="Füg die Nachricht ein. In Sekunden weißt du, ob du ihr trauen kannst." />
     <!-- Link previews: crawlers don't run JavaScript, so one static version serves both languages. -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="O₂ Scam-Check" />
@@ -68,23 +68,10 @@
               <div class="verdict-art" id="verdict-art" hidden></div>
               <span class="verdict-icon" id="verdict-icon"><span class="icon i-warning" aria-hidden="true"></span></span>
               <p class="spotted" id="spotted" hidden></p>
-              <h2 id="headline" tabindex="-1"></h2>
             </div>
             <div class="verdict-body">
+              <h2 id="headline" tabindex="-1"></h2>
               <p id="reason"></p>
-              <div class="compare" id="compare" hidden>
-                <h3 data-i18n="compare.title"></h3>
-                <p class="compare-row fake">
-                  <span class="mark"><span class="icon i-cross" aria-hidden="true"></span></span>
-                  <span class="compare-domain" id="fake-domain"></span>
-                  <span class="compare-tag" data-i18n="compare.fake"></span>
-                </p>
-                <p class="compare-row real">
-                  <span class="mark"><span class="icon i-tick" aria-hidden="true"></span></span>
-                  <span class="compare-domain" id="real-domain"></span>
-                  <span class="compare-tag" data-i18n="compare.real"></span>
-                </p>
-              </div>
               <h3 data-i18n="result.steps"></h3>
               <ol class="steps" id="steps"></ol>
               <p class="help" id="help"></p>
@@ -148,18 +135,17 @@
         </div>
       </section>
 
-      <!-- The five scam types: stacked on phones, one at a time with tabs on desktop. Filled by main.js. -->
+      <!-- The five scam types as still tiles: rows on phones, 3 + 2 on desktop. Filled by main.js. -->
       <section class="types" id="types" aria-labelledby="types-title">
         <h2 id="types-title" data-i18n="types.title"></h2>
-        <div class="type-tabs" id="type-tabs" role="group" data-i18n-label="types.tabs"></div>
-        <div class="type-list" id="type-list"></div>
+        <ul class="tiles" id="tiles"></ul>
       </section>
     </main>
 
     <dialog class="sheet" id="upload-dialog" aria-labelledby="upload-title">
       <form method="dialog">
         <button class="close" data-i18n-label="upload.close"><span class="icon i-close" aria-hidden="true"></span></button>
-        <span class="tile"><span class="icon i-camera" aria-hidden="true"></span></span>
+        <span class="sheet-icon"><span class="icon i-camera" aria-hidden="true"></span></span>
         <h2 id="upload-title" data-i18n="upload.title"></h2>
         <p data-i18n="upload.text"></p>
         <button class="btn btn-primary" autofocus data-i18n="upload.ok"></button>
