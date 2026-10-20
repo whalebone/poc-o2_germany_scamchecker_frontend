@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#00008c" />
     <title>Ist das Betrug? · O₂ Scam-Check</title>
-    <meta name="description" content="Füg die Nachricht ein. Wir sagen dir sofort, woran du bist." />
+    <meta name="description" content="Füg die Nachricht ein. Wir sagen dir in Sekunden, woran du bist." />
     <!-- Link previews: crawlers don't run JavaScript, so one static version serves both languages. -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="O₂ Scam-Check" />
@@ -17,7 +17,7 @@
     <link rel="preload" href="/fonts/OnAir-Bold.woff2" as="font" type="font/woff2" crossorigin />
   </head>
   <body>
-    <!-- Texts come from src/strings.js via the data-i18n attributes. -->
+    <!-- Texts come from src/strings.js via the data-i18n attributes; the cartoons from src/scenes.js. -->
     <header class="hero">
       <div class="wrap">
         <div class="bar">
@@ -51,29 +51,40 @@
           <span class="icon i-search" aria-hidden="true"></span>
           <span id="submit-label" data-i18n="form.submit"></span>
         </button>
-        <p class="note" data-i18n="form.note"></p>
       </form>
 
-      <!-- One slot below the form: checking, then the result (or the demo notice). -->
+      <!-- One slot next to (desktop) or below (phones) the form: checking, then the result (or the demo notice). -->
       <section class="slot" id="slot" hidden>
         <p class="sr-only" id="status" role="status"></p>
 
-        <div class="card" id="progress" hidden>
-          <ol class="checklist">
-            <li data-i18n="progress.read"></li>
-            <li data-i18n="progress.link"></li>
-            <li data-i18n="progress.done"></li>
-          </ol>
+        <div class="card checking" id="progress" hidden>
+          <div class="scene" id="checking-scene"></div>
+          <p class="checking-text" id="progress-text" aria-hidden="true"></p>
         </div>
 
         <div class="result" id="result" hidden>
           <article class="card verdict" id="verdict">
             <div class="verdict-head">
-              <span class="verdict-icon"><span class="icon i-warning" aria-hidden="true"></span></span>
+              <div class="verdict-art" id="verdict-art" hidden></div>
+              <span class="verdict-icon" id="verdict-icon"><span class="icon i-warning" aria-hidden="true"></span></span>
+              <p class="spotted" id="spotted" hidden></p>
               <h2 id="headline" tabindex="-1"></h2>
             </div>
             <div class="verdict-body">
               <p id="reason"></p>
+              <div class="compare" id="compare" hidden>
+                <h3 data-i18n="compare.title"></h3>
+                <p class="compare-row fake">
+                  <span class="mark"><span class="icon i-cross" aria-hidden="true"></span></span>
+                  <span class="compare-domain" id="fake-domain"></span>
+                  <span class="compare-tag" data-i18n="compare.fake"></span>
+                </p>
+                <p class="compare-row real">
+                  <span class="mark"><span class="icon i-tick" aria-hidden="true"></span></span>
+                  <span class="compare-domain" id="real-domain"></span>
+                  <span class="compare-tag" data-i18n="compare.real"></span>
+                </p>
+              </div>
               <h3 data-i18n="result.steps"></h3>
               <ol class="steps" id="steps"></ol>
               <p class="help" id="help"></p>
@@ -100,19 +111,22 @@
             </div>
           </article>
 
+          <section class="card trick" id="trick" hidden>
+            <div class="story" id="trick-story"></div>
+          </section>
+
           <aside class="card protect" id="protect" hidden>
-            <span class="icon i-shield" aria-hidden="true"></span>
+            <div class="protect-art" id="protect-art"></div>
             <h2 data-i18n-html="protect.title"></h2>
             <p data-i18n-html="protect.text"></p>
             <a class="btn btn-on-blue" href="https://www.o2online.de/extras/cloud-sicherheit/onlineschutz/" target="_blank" rel="noopener">
               <span data-i18n-html="protect.cta"></span>
             </a>
-            <p class="protect-note" data-i18n="protect.note"></p>
           </aside>
 
           <aside class="card share" id="share" hidden>
             <h2 data-i18n="share.title"></h2>
-            <p data-i18n="share.text"></p>
+            <p id="share-text"></p>
             <button type="button" class="btn btn-secondary" id="share-native" hidden>
               <span class="icon i-share" aria-hidden="true"></span>
               <span data-i18n="share.button"></span>
@@ -133,11 +147,14 @@
           <button type="button" class="btn btn-secondary" id="notice-example" data-i18n="form.example"></button>
         </div>
       </section>
-    </main>
 
-    <footer class="wrap footer">
-      <p data-i18n="footer.text"></p>
-    </footer>
+      <!-- The five scam types: stacked on phones, one at a time with tabs on desktop. Filled by main.js. -->
+      <section class="types" id="types" aria-labelledby="types-title">
+        <h2 id="types-title" data-i18n="types.title"></h2>
+        <div class="type-tabs" id="type-tabs" role="group" data-i18n-label="types.tabs"></div>
+        <div class="type-list" id="type-list"></div>
+      </section>
+    </main>
 
     <dialog class="sheet" id="upload-dialog" aria-labelledby="upload-title">
       <form method="dialog">

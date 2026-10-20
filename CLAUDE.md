@@ -2,7 +2,7 @@
 
 Frontend-only PoC for the O₂ Germany Scam Checker: a static site built with Vite (plain HTML, CSS and JavaScript) and hosted on Netlify. The backend is a separate project — nothing server-side lives in this repo.
 
-Status: demo page with one example flow (a fake customs/parcel SMS), in German and English. The backend is mocked in `src/demo.js`.
+Status: demo page with one example flow (a fake customs/parcel SMS), in German and English, with animated explainers for the five common scam types. Separate layouts for phones (one column) and desktop (two columns from 1024 px). The backend is mocked in `src/demo.js`.
 
 **Before any UI or UX work, read `docs/product.md`.** It holds:
 - the product goal and the owner's requirements
@@ -27,14 +27,14 @@ Don't redo that research. Update the file when a decision changes.
 - `npm run build` — production build into `dist/` (what Netlify runs)
 - `npm run preview` — serve the built `dist/` locally
 - `npm run check` — behaviour checks against the running dev server (language, check flow, result, feedback, share, keyboard, contrast)
-- `npm run shots` — screenshots of every state into `shots/` (git-ignored): phone 390 px German, small phones, English at 360 px, desktop
+- `npm run shots` — screenshots of every state into `shots/` (git-ignored): phone 390 px German, small phones, English at 360 px, desktop 1440 and 1024 px
 - `npm run og` — re-render `public/og.jpg` (link preview) after changing the hero title or logo
 
 On Windows, `runapp.bat` starts the dev server in the background and opens the browser; `shutdown.bat` stops it. The user usually has it running with the page open: edits reload in the browser on their own, so don't start a second server. Server output goes to `dev-server.log`. `check`, `shots` and `og` use `playwright-core` with the installed Google Chrome; no browser download.
 
 ## UI iteration loop
 
-1. Read `docs/product.md` and make the change. Texts go in `src/strings.js` (both languages), styles in `src/style.css`.
+1. Read `docs/product.md` and make the change. Texts go in `src/strings.js` (both languages), styles in `src/style.css`, cartoons in `src/scenes.js` with their animations in `src/scenes.css`.
 2. Run `npm run check`. If you changed behaviour on purpose, update `scripts/check.mjs` too.
 3. Run `npm run shots` and look at the result, 360 px, English and desktop shots.
 4. For a visible UX change, run a product-designer review as described in `docs/product.md`.
@@ -47,6 +47,8 @@ On Windows, `runapp.bat` starts the dev server in the background and opens the b
 - `src/main.js` — JavaScript entry (imports `style.css`): language, check flow, result, feedback, share
 - `src/strings.js` — every visible text, German (`de`) and English (`en`) with the same keys
 - `src/demo.js` — stand-in for the backend: the example message and its answer (`POST /v1/scam-check`), feedback logging (`POST /v1/feedback`)
+- `src/scenes.js` — the cartoons as inline SVG strings: the five scam stories, the loader, the "spotted" result scene, the Onlineschutz scene, the desktop tab avatars
+- `src/scenes.css` — their keyframes; stories play once via `data-state` (set in `main.js`), the loader via `data-phase`
 - `src/style.css` — styles, mobile first
 - `public/` — static files served as-is from the site root: On Air fonts, O₂ icons and logo, the hero bubble, `og.jpg` (link preview)
 - `vite.config.js` — dev server port 5180 (also set in both `.bat` files); fills in `__SITE_URL__` for the link preview
@@ -64,7 +66,7 @@ On Windows, `runapp.bat` starts the dev server in the background and opens the b
 
 ## Backend hand-over
 
-`src/demo.js` returns only the key fields of the proposed response: `request_id`, `verdict`, `type`, `headline`, `reason`, `link { domain, status }`, `next_steps`, `if_it_happened`. To go live, replace `checkMessage()` and `sendFeedback()` with `fetch` calls and drop `isExample()` and the demo notice. `link.status === 'malicious'` (known in the domain database) shows the Onlineschutz upsell; a non-null `type` (a known, common scam) shows the share card.
+`src/demo.js` returns only the key fields of the proposed response: `request_id`, `verdict`, `type`, `headline`, `reason`, `link { domain, status, imitates }`, `next_steps`, `if_it_happened`. To go live, replace `checkMessage()` and `sendFeedback()` with `fetch` calls and drop `isExample()` and the demo notice. `link.status === 'malicious'` (known in the domain database) shows the Onlineschutz upsell; a known `type` (one of the five in `SCAM_TYPES`) shows the Trickser in its costume, its story and the share card; `link.imitates` (the real site, e.g. `zoll.de`) shows „Echt oder Fake?“. The page keeps the loader on screen for at least 3.5 s.
 
 ## Design: o2-design skill
 
@@ -85,3 +87,5 @@ Netlify's production branch is `dev` (set in the Netlify UI), so every push to `
 - To change the port, update `vite.config.js`, `runapp.bat` and `shutdown.bat` together.
 - Put `:hover` styles inside `@media (hover: hover)`; on phones a hover state sticks after a tap.
 - Text fields need a font size of 16 px or more, or iOS zooms in on focus.
+- In the scenes, animate only a `<g>` without a `transform` attribute (wrap it with `at()`): a CSS transform replaces the attribute. The `transform-origin: center` rule skips elements with the attribute on purpose, or their scale or rotate would move them.
+- To check an animation frame by frame, pause it: `el.getAnimations({ subtree: true }).forEach((a) => { a.pause(); a.currentTime = ms })`, then take a screenshot.

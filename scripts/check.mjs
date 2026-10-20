@@ -31,8 +31,8 @@ check('no exclamation marks in any text (O₂ voice)', !loud.length, loud.join('
 
 const browser = await chromium.launch({ channel: 'chrome' }) // the installed Google Chrome
 
-async function open(path = '', { locale = 'de-DE', saved = null, viewport = { width: 390, height: 844 }, mobile = true } = {}) {
-  const ctx = await browser.newContext({ viewport, isMobile: mobile, hasTouch: mobile, locale })
+async function open(path = '', { locale = 'de-DE', saved = null, viewport = { width: 390, height: 844 }, mobile = true, reducedMotion = 'no-preference' } = {}) {
+  const ctx = await browser.newContext({ viewport, isMobile: mobile, hasTouch: mobile, locale, reducedMotion })
   if (saved) await ctx.addInitScript((lang) => localStorage.setItem('lang', lang), saved)
   const page = await ctx.newPage()
   page.logs = []
@@ -48,8 +48,10 @@ const focusedId = (p) => p.evaluate(() => document.activeElement?.id)
 const showResult = async (p) => {
   await p.click('#example')
   await p.click('#submit')
-  await p.waitForSelector('#result:not([hidden])', { timeout: 10000 })
+  await p.waitForSelector('#result:not([hidden])', { timeout: 15000 })
 }
+const state = (p, selector) => p.locator(selector).evaluate((el) => el.dataset.state ?? 'idle')
+const finishAnimations = (p, selector) => p.locator(selector).evaluate((el) => el.getAnimations({ subtree: true }).forEach((a) => a.finish()))
 const pageErrors = []
 
 // Language
@@ -81,19 +83,46 @@ check('an empty check focuses the field', (await focusedId(p)) === 'message')
 await p.fill('#message', 'x')
 check('typing hides and unlinks the hint', !(await visible(p, '#hint')) && (await p.getAttribute('#message', 'aria-describedby')) === null)
 
-// Example and result
+// The scam types on the landing page
+p = await open()
+check('the landing page shows all 5 scam types', (await p.locator('.type-card').count()) === 5 && (await visible(p, '#types')))
+check('a story out of view does not play', (await state(p, '.type-card:nth-child(2) .story')) === 'idle')
+await p.locator('.type-card:first-child .story').scrollIntoViewIfNeeded()
+await p.waitForTimeout(400)
+check('a story plays once it is in view', (await state(p, '.type-card:first-child .story')) === 'playing')
+check('the toggle says "Pause" while it plays', (await p.getAttribute('.type-card:first-child .scene-toggle', 'aria-label')) === DE['story.pause'])
+await p.click('.type-card:first-child .scene-toggle')
+check('the toggle pauses the story', (await state(p, '.type-card:first-child .story')) === 'paused')
+await p.click('.type-card:first-child .scene-toggle')
+await finishAnimations(p, '.type-card:first-child .story')
+await p.waitForTimeout(100)
+check('a story stops after one run', (await state(p, '.type-card:first-child .story')) === 'done')
+check('then the toggle offers "Nochmal ansehen"', (await p.getAttribute('.type-card:first-child .scene-toggle', 'aria-label')) === DE['story.replay'])
+await p.click('.type-card:first-child .scene-toggle')
+check('"Nochmal ansehen" plays it again', (await state(p, '.type-card:first-child .story')) === 'playing')
+
+// Example, checking and result
 p = await open()
 await p.click('#example')
 check('"use example" fills the field', (await p.inputValue('#message')) === EXAMPLES.de)
 check('"use example" does not focus the field (no keyboard)', (await focusedId(p)) !== 'message')
 await p.click('#submit')
-await p.waitForSelector('#result:not([hidden])', { timeout: 10000 })
+await p.waitForTimeout(300)
+check('checking starts by reading the message', (await p.getAttribute('#progress', 'data-phase')) === 'read' && (await p.textContent('#progress-text')) === DE['progress.read'])
+check('the scam types hide while checking', !(await visible(p, '#types')))
+await p.waitForTimeout(1700)
+check('a message with a link goes to the blocklist', (await p.getAttribute('#progress', 'data-phase')) === 'link')
+await p.waitForSelector('#result:not([hidden])', { timeout: 15000 })
 check('the result headline gets focus', (await focusedId(p)) === 'headline')
 check('the headline only breaks between sentences', await p.evaluate(() => {
   const h = document.getElementById('headline')
   return h.querySelectorAll('span').length === h.textContent.split(/(?<=\.) /).length
 }))
-check('the scam domain is marked', (await p.textContent('#reason mark')) === DOMAIN)
+check('the result names the scam type', (await p.textContent('#spotted')) === DE['result.spotted'].replace('{name}', DE['scam.parcel_scam.name']))
+check('the spotted scene shows for a scam', await visible(p, '#verdict-art svg'))
+check('real or fake: the scam domain', (await p.textContent('#fake-domain')) === DOMAIN)
+check('real or fake: the real site, as plain text', (await p.textContent('#real-domain')) === 'zoll.de' && !(await p.locator('#compare a').count()))
+check('the result explains the trick with its story', (await visible(p, '#trick')) && (await p.locator('#trick .sc-parcel_scam').count()) === 1)
 check('116 116 is a tel: link', (await p.getAttribute('#help a', 'href')) === 'tel:116116')
 check('page text has no raw ₂ (On Air lacks it)', !(await p.evaluate(() => document.body.innerText.includes('₂'))))
 check('Onlineschutz card shows for a domain in the database', await visible(p, '#protect'))
@@ -113,14 +142,15 @@ check('feedback says thanks', await visible(p, '[data-step="thanks"]'))
 
 // Language switch while a result shows: the whole card swaps at once
 await p.click('[data-lang="en"]')
-check('during the refresh the card stays fully German', (await p.textContent('#result h3')) === DE['result.steps'] && (await p.getAttribute('#result', 'lang')) === 'de')
+check('during the refresh the card stays fully German', (await p.textContent('#result [data-i18n="result.steps"]')) === DE['result.steps'] && (await p.getAttribute('#result', 'lang')) === 'de')
 check('during the refresh the rest of the page is English', (await p.textContent('h1')) === EN['hero.title'])
 check('during the refresh the switch looks disabled', (await p.getAttribute('[data-lang="de"]', 'aria-disabled')) === 'true')
 check('during the refresh the form button is not dimmed', !(await p.isDisabled('#submit')))
-await p.waitForSelector('#result:not([lang])', { timeout: 10000 })
-check('after the refresh the card is English', (await p.textContent('#result h3')) === EN['result.steps'])
+await p.waitForSelector('#result:not([lang])', { timeout: 15000 })
+check('after the refresh the card is English', (await p.textContent('#result [data-i18n="result.steps"]')) === EN['result.steps'])
 check('after the refresh the switch works again', (await p.getAttribute('[data-lang="de"]', 'aria-disabled')) === 'false')
 check('the refresh resets the feedback', await visible(p, '[data-step="ask"]'))
+check('the scam type is named in English', (await p.textContent('#spotted')) === EN['result.spotted'].replace('{name}', EN['scam.parcel_scam.name']))
 check('an untouched example follows the language', (await p.inputValue('#message')) === EXAMPLES.en)
 check('focus stays on the language switch', await p.evaluate(() => document.activeElement?.dataset.lang === 'en'))
 
@@ -128,8 +158,9 @@ check('focus stays on the language switch', await p.evaluate(() => document.acti
 await p.click('#reset')
 check('reset hides the result', !(await visible(p, '#slot')))
 check('reset clears and focuses the field', (await p.inputValue('#message')) === '' && (await focusedId(p)) === 'message')
+check('after reset the scam types are back', await visible(p, '#types'))
 await p.click('[data-lang="de"]')
-await p.waitForTimeout(3000)
+await p.waitForTimeout(5500)
 check('after reset, a language switch does not bring the result back', !(await visible(p, '#slot')))
 
 // Demo notice
@@ -157,9 +188,28 @@ await k.waitForTimeout(300)
 const after = await k.evaluate(() => document.getElementById('submit').getBoundingClientRect().bottom)
 check(`the button moves above the keyboard (bottom ${Math.round(before)} -> ${Math.round(after)} of 400)`, before > 400 && after <= 389)
 
+// Reduced motion: nothing plays, each story shows its last frame with all steps
+const r = await open('', { reducedMotion: 'reduce' })
+await r.locator('.type-card:first-child .story').scrollIntoViewIfNeeded()
+await r.waitForTimeout(400)
+check('with reduced motion, stories show their last frame', (await state(r, '.type-card:first-child .story')) === 'done')
+check('with reduced motion, there is no play button', !(await visible(r, '.type-card:first-child .scene-toggle')))
+
 // Desktop
 const d = await open('', { viewport: { width: 1280, height: 800 }, mobile: false })
-await showResult(d)
+check('desktop: form and scam types side by side', await d.evaluate(() => {
+  const form = document.getElementById('form').getBoundingClientRect()
+  const types = document.getElementById('types').getBoundingClientRect()
+  return types.left > form.right && Math.abs(types.top - form.top) < 2
+}))
+check('desktop: one scam type at a time', (await d.locator('.type-card:visible').count()) === 1)
+await d.click('.type-tab:nth-child(3)')
+check('desktop: a tab shows its scam type', (await d.locator('.type-card:visible').getAttribute('data-type')) === 'family_impersonation' && (await d.getAttribute('.type-tab:nth-child(3)', 'aria-current')) === 'true')
+await d.click('#example')
+await d.focus('#message')
+await d.keyboard.press('Control+Enter')
+check('desktop: Ctrl+Enter checks the message', await visible(d, '#progress'))
+await d.waitForSelector('#result:not([hidden])', { timeout: 15000 })
 check('desktop shows WhatsApp, e-mail and copy', (await visible(d, '#share-links')) && !(await visible(d, '#share-native')))
 const shared = decodeURIComponent(await d.getAttribute('#share-whatsapp', 'href'))
 const warnings = Object.keys(DE).filter((key) => key.startsWith('share.message.')).map((key) => DE[key])

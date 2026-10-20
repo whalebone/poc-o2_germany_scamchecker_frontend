@@ -5,7 +5,7 @@ const DOMAIN = 'paket-zoll-de.info'
 
 // The link gets its own line, so the domain isn't split across lines.
 export const EXAMPLES = {
-  de: `Ihr Paket wird beim Zoll festgehalten. Bitte zahlen Sie heute 2,99 € Gebühr, sonst wird es zurückgeschickt:\nhttps://${DOMAIN}/z/8K2P`,
+  de: `Ihr Paket wird beim Zoll festgehalten. Bitte zahlen Sie heute 2,99 € Gebühr, sonst wird es zurückgeschickt:\nhttps://${DOMAIN}/z/8K2P`,
   en: `Your parcel is being held at customs. Please pay the €2.99 fee today or it will be returned:\nhttps://${DOMAIN}/z/8K2P`,
 }
 
@@ -14,8 +14,9 @@ const ANSWERS = {
     verdict: 'scam', // scam | caution | ok
     type: 'parcel_scam', // a known, common scam type, or null
     headline: 'Finger weg. Das ist Betrug.',
-    reason: `Der Link führt auf ${DOMAIN}. Die Seite gehört nicht dem Zoll. Wir kennen sie als Betrugsseite.`,
-    link: { domain: DOMAIN, status: 'malicious' }, // malicious = in our domain database
+    reason: 'Die SMS tut so, als käme sie vom Zoll. Die 2,99 € sind nur der Köder: Eigentlich wollen die Betrüger deine Kartendaten.',
+    // malicious = in our domain database; imitates = the real site the link pretends to be, or null
+    link: { domain: DOMAIN, status: 'malicious', imitates: 'zoll.de' },
     next_steps: ['Tipp nicht auf den Link.', 'Lösch die SMS.'],
     if_it_happened: 'Schon Daten eingegeben? Lass deine Karte sperren: 116 116',
   },
@@ -23,8 +24,8 @@ const ANSWERS = {
     verdict: 'scam',
     type: 'parcel_scam',
     headline: 'Steer clear. This is a scam.',
-    reason: `The link goes to ${DOMAIN}. The site isn’t run by German Customs. It’s a known scam site.`,
-    link: { domain: DOMAIN, status: 'malicious' },
+    reason: 'The text pretends to be from German Customs. The €2.99 is just the bait: what they’re really after is your card details.',
+    link: { domain: DOMAIN, status: 'malicious', imitates: 'zoll.de' },
     next_steps: ['Don’t tap the link.', 'Delete the text.'],
     if_it_happened: 'Already entered your details? Call 116 116 or your bank to cancel your card.',
   },
@@ -36,7 +37,7 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 export const isExample = (text) => text.includes(DOMAIN)
 
 export async function checkMessage(text, language) {
-  await wait(2400) // the backend targets answers in under 5 seconds
+  await wait(5000) // what we expect from the real backend (its target is under 5 s)
   return { request_id: `sc_${Math.random().toString(36).slice(2, 10)}`, ...ANSWERS[language] }
 }
 

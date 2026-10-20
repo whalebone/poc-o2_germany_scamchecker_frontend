@@ -1,0 +1,610 @@
+/* Animations for the cartoons in scenes.js.
+   Stories (9 s) and the result scenes play once when they come into view: main.js sets data-state on their
+   container (playing, paused, done) and `both` keeps the last frame. The loader follows data-phase.
+   Keyframe names start with the scene: p- parcel, a- account, f- family, g- Goldesel, r- romance,
+   b- spotted (result), k- blocked (Onlineschutz), ck- checking. */
+
+.sc {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* Animated parts turn around their own centre. Parts placed with a transform attribute keep the SVG
+   default (0 0), or their scale and rotation would move them. */
+.sc :not([transform]) {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+[data-state='paused'] *,
+[data-state='paused'] *::before {
+  animation-play-state: paused !important;
+}
+
+/* ---------- Every story ---------- */
+
+[data-state] .story-sc {
+  animation: clock 9s linear; /* main.js marks the story done when this ends */
+}
+
+@keyframes clock {
+  to { opacity: 1; }
+}
+
+/* The steps under the scene light up one by one, 3 s each; before and after, all are lit. */
+:is([data-state='playing'], [data-state='paused']) .beats li {
+  color: var(--ink-3);
+  animation: beat-text 3s linear;
+}
+:is([data-state='playing'], [data-state='paused']) .beats li::before {
+  background: #fff;
+  color: var(--ink-3);
+  box-shadow: inset 0 0 0 2px var(--line);
+  animation: beat-dot 3s linear;
+}
+.beats li:nth-child(2),
+.beats li:nth-child(2)::before {
+  animation-delay: 3s;
+}
+.beats li:nth-child(3),
+.beats li:nth-child(3)::before {
+  animation-delay: 6s;
+}
+@keyframes beat-text {
+  from, to { color: var(--ink); }
+}
+@keyframes beat-dot {
+  from, to { background: var(--blue); color: #fff; box-shadow: none; }
+}
+
+[data-state] .story-sc .bob { animation: bob 1.5s ease-in-out 6 alternate; }
+@keyframes bob {
+  to { transform: translateY(-3px); }
+}
+
+[data-state] .story-sc .pupils { animation: glance 9s both; }
+@keyframes glance {
+  0%, 16%, 30%, 56%, 70%, 100% { transform: none; }
+  19%, 27%, 59%, 67% { transform: translateX(3px); }
+}
+
+.buzz { transform-origin: 50% 100%; }
+[data-state] .story-sc .buzz { animation: buzz 9s both; }
+@keyframes buzz {
+  0%, 2%, 8%, 100% { transform: none; }
+  3%, 5%, 7% { transform: rotate(-4deg); }
+  4%, 6% { transform: rotate(4deg); }
+}
+
+@keyframes sms-in {
+  0%, 4% { transform: scale(0); }
+  7% { transform: scale(1.08); }
+  9%, 100% { transform: none; }
+}
+
+/* ---------- Paket-Trickser ---------- */
+
+.sc-parcel_scam .p-sms { transform-origin: 20% 100%; }
+.sc-parcel_scam .p-lid { transform-origin: 0 100%; }
+
+[data-state] .sc-parcel_scam .p-sms { animation: p-sms 9s both; }
+@keyframes p-sms {
+  0%, 4% { transform: scale(0); }
+  7% { transform: scale(1.08); }
+  9%, 40% { transform: none; opacity: 1; }
+  42%, 100% { transform: none; opacity: 0; }
+}
+
+[data-state] .sc-parcel_scam .tap { animation: p-tap 9s both; }
+@keyframes p-tap {
+  0%, 34% { opacity: 0; transform: scale(0.4); }
+  36% { opacity: 1; }
+  41%, 100% { opacity: 0; transform: scale(1.8); }
+}
+
+[data-state] .sc-parcel_scam .p-form { animation: p-form 9s both; }
+@keyframes p-form {
+  0%, 41% { opacity: 0; }
+  44%, 100% { opacity: 1; }
+}
+
+[data-state] .sc-parcel_scam .p-card { animation: p-card 9s ease-in-out both; }
+@keyframes p-card {
+  0%, 44% { opacity: 0; transform: translate(0, 66px); }
+  46% { opacity: 1; transform: translate(0, 60px); }
+  56%, 67% { opacity: 1; transform: none; }
+  72% { transform: translate(84px, -56px) rotate(-20deg); }
+  77%, 100% { opacity: 1; transform: translate(186px, 40px) rotate(-8deg) scale(0.85); }
+}
+
+[data-state] .sc-parcel_scam .jump { animation: p-jump 9s both; }
+@keyframes p-jump {
+  0%, 76% { transform: none; }
+  79% { transform: translateY(-12px); }
+  82% { transform: none; }
+  85% { transform: translateY(-6px); }
+  88%, 100% { transform: none; }
+}
+
+[data-state] .sc-parcel_scam .coin { animation: p-coin 9s ease-in-out both; }
+@keyframes p-coin {
+  0%, 77% { opacity: 0; transform: none; }
+  78% { opacity: 1; transform: none; }
+  81% { transform: translate(100px, -42px); }
+  84%, 100% { opacity: 1; transform: translate(214px, 54px); }
+}
+
+[data-state] .sc-parcel_scam .p-lid { animation: p-lid 9s both; }
+@keyframes p-lid {
+  0%, 89% { transform: none; }
+  93%, 100% { transform: translate(-2px, -3px) rotate(-55deg); }
+}
+
+/* A moth flutters out: the parcel was empty all along. */
+[data-state] .sc-parcel_scam .moth { animation: p-moth 9s ease-out both; }
+@keyframes p-moth {
+  0%, 90% { opacity: 0; transform: translateY(12px) scale(0.4); }
+  92% { opacity: 1; transform: translate(0, -6px) scale(0.9); }
+  94% { transform: translate(-8px, -16px) rotate(-14deg) scale(1.1); }
+  96% { transform: translate(2px, -28px) rotate(14deg) scale(1.2); }
+  98% { transform: translate(-10px, -36px) rotate(-10deg) scale(1.3); }
+  100% { opacity: 1; transform: translate(-6px, -44px) scale(1.3); }
+}
+
+/* ---------- Konto-Knacker ---------- */
+
+.sc-account_phishing .a-lock { transform-origin: 50% 30%; }
+
+[data-state] .sc-account_phishing .a-lock { animation: a-lock 9s both; }
+@keyframes a-lock {
+  0%, 3% { transform: scale(0); }
+  6% { transform: scale(1.1); }
+  8% { transform: none; }
+  12%, 16%, 20% { transform: rotate(-10deg); }
+  14%, 18% { transform: rotate(10deg); }
+  22%, 33% { transform: none; opacity: 1; }
+  36%, 100% { transform: none; opacity: 0; }
+}
+
+/* His login page comes down on the line: both move linearly in the same window. */
+[data-state] .sc-account_phishing .a-line { animation: a-line 9s linear both; }
+@keyframes a-line {
+  0%, 37% { stroke-dashoffset: 1; }
+  43%, 100% { stroke-dashoffset: 0; }
+}
+
+[data-state] .sc-account_phishing .a-form { animation: a-form 9s linear both; }
+@keyframes a-form {
+  0%, 36.9% { opacity: 0; transform: translateY(-44px); }
+  37% { opacity: 1; transform: translateY(-44px); }
+  43%, 100% { opacity: 1; transform: none; }
+}
+
+[data-state] .sc-account_phishing .dot { animation: a-dot 9s both; }
+@keyframes a-dot {
+  0%, 46% { opacity: 0; }
+  47%, 100% { opacity: 1; }
+}
+
+[data-state] .sc-account_phishing .a-key { animation: a-key 9s ease-in-out both; }
+@keyframes a-key {
+  0%, 67% { opacity: 0; transform: scale(0.4); }
+  69% { opacity: 1; transform: none; }
+  74% { transform: translate(0, -80px) rotate(-90deg); }
+  81%, 100% { opacity: 1; transform: translate(136px, 8px) rotate(33deg); }
+}
+
+[data-state] .sc-account_phishing .coin { animation: a-coin 9s ease-in-out both; }
+@keyframes a-coin {
+  0%, 81% { opacity: 0; transform: none; }
+  82% { opacity: 1; transform: none; }
+  85% { transform: translate(100px, -30px); }
+  88%, 100% { opacity: 1; transform: translate(206px, 12px); }
+}
+
+/* ---------- Hallo-Mama-Schwindler ---------- */
+
+.sc-family_impersonation .f-sms,
+.sc-family_impersonation .f-ask { transform-origin: 20% 100%; }
+.sc-family_impersonation .f-mask { transform-origin: 53% 100%; } /* the end of his stick */
+
+[data-state] .sc-family_impersonation .f-sms { animation: sms-in 9s both; }
+
+[data-state] .sc-family_impersonation .f-ask { animation: f-ask 9s both; }
+@keyframes f-ask {
+  0%, 35% { opacity: 0; transform: scale(0); }
+  36% { opacity: 1; transform: scale(0); }
+  39% { transform: scale(1.08); }
+  41%, 100% { opacity: 1; transform: none; }
+}
+
+[data-state] .sc-family_impersonation .f-mask { animation: f-mask 9s ease-in-out both; }
+@keyframes f-mask {
+  0%, 42% { transform: none; }
+  44%, 48%, 52% { transform: rotate(-7deg); }
+  46%, 50%, 54% { transform: rotate(7deg); }
+  56%, 80% { transform: none; }
+  88%, 100% { transform: translate(-40px, 4px) scaleY(0.3); } /* falls flat on the ground */
+}
+
+[data-state] .sc-family_impersonation .coin { animation: f-coin 9s ease-in-out both; }
+@keyframes f-coin {
+  0%, 67% { opacity: 0; transform: none; }
+  68% { opacity: 1; transform: none; }
+  71% { transform: translate(100px, -40px); }
+  74%, 100% { opacity: 1; transform: translate(206px, 29px); }
+}
+
+/* ---------- Goldesel ---------- */
+
+.sc-fake_profit .g-sack { transform-origin: 50% 100%; }
+
+[data-state] .sc-fake_profit .g-up1 { animation: g-up1 9s linear both; }
+@keyframes g-up1 {
+  0%, 6% { stroke-dashoffset: 1; }
+  24%, 100% { stroke-dashoffset: 0; }
+}
+
+[data-state] .sc-fake_profit .g-up2 { animation: g-up2 9s linear both; }
+@keyframes g-up2 {
+  0%, 40% { stroke-dashoffset: 1; }
+  56%, 100% { stroke-dashoffset: 0; }
+}
+
+/* His crayon hops from his hand into your phone along a dotted arc, draws (the segment times match
+   the segment lengths), and goes back to his hand before he runs. */
+[data-state] .sc-fake_profit .g-crayon { animation: g-crayon 9s linear both; }
+@keyframes g-crayon {
+  0%, 2% { transform: translate(239px, 7px); }
+  4% { transform: translate(120px, -42px); }
+  6% { transform: none; }
+  12% { transform: translate(10px, -12px); }
+  15.4% { transform: translate(18px, -8px); }
+  24%, 40% { transform: translate(28px, -28px); }
+  56%, 60% { transform: translate(38px, -56px); }
+  63% { transform: translate(140px, -60px); }
+  66%, 69% { opacity: 1; transform: translate(239px, 7px); }
+  71%, 100% { opacity: 0; transform: translate(239px, 7px); }
+}
+
+[data-state] .sc-fake_profit .g-arc { animation: g-arc 9s both; }
+@keyframes g-arc {
+  0%, 1% { opacity: 0; }
+  2%, 5% { opacity: 1; }
+  8%, 100% { opacity: 0; }
+}
+
+[data-state] .sc-fake_profit .spark { animation: g-spark 9s both; }
+@keyframes g-spark {
+  0%, 22% { transform: scale(0); }
+  25% { transform: scale(1.2); }
+  28% { transform: scale(0.6); }
+  31%, 60% { transform: none; }
+  64%, 100% { transform: scale(0); }
+}
+
+[data-state] .sc-fake_profit .coin { animation: g-coin 9s ease-in-out both; }
+@keyframes g-coin {
+  0%, 37% { opacity: 0; transform: none; }
+  38% { opacity: 1; transform: none; }
+  41% { transform: translate(70px, -44px); }
+  44% { opacity: 1; transform: translate(138px, 16px) scale(0.8); }
+  45%, 100% { opacity: 0; transform: translate(138px, 16px) scale(0.5); }
+}
+
+[data-state] .sc-fake_profit .g-sack { animation: g-sack 9s both; }
+@keyframes g-sack {
+  0%, 43% { transform: none; }
+  45% { transform: scale(1.16); }
+  47%, 50% { transform: scale(1.1); }
+  52% { transform: scale(1.26); }
+  54%, 57% { transform: scale(1.2); }
+  59% { transform: scale(1.36); }
+  61%, 100% { transform: scale(1.3); }
+}
+
+[data-state] .sc-fake_profit .g-run { animation: g-run 9s ease-in both; }
+@keyframes g-run {
+  0%, 68% { transform: none; }
+  70% { transform: translateX(-6px); }
+  80%, 100% { transform: translateX(140px); }
+}
+
+[data-state] .sc-fake_profit .g-dust { animation: g-dust 9s both; }
+@keyframes g-dust {
+  0%, 69% { opacity: 0; transform: scale(0.5); }
+  72% { opacity: 0.9; transform: none; }
+  80%, 100% { opacity: 0; transform: scale(1.4); }
+}
+
+[data-state] .sc-fake_profit .g-chart { animation: g-chart 9s both; }
+@keyframes g-chart {
+  0%, 82% { opacity: 1; }
+  88%, 100% { opacity: 0.3; }
+}
+
+[data-state] .sc-fake_profit .g-crash { animation: g-crash 9s linear both; }
+@keyframes g-crash {
+  0%, 82% { stroke-dashoffset: 1; }
+  88%, 100% { stroke-dashoffset: 0; }
+}
+
+.sc-fake_profit .g-phone { transform-origin: 50% 100%; }
+[data-state] .sc-fake_profit .g-phone { animation: g-phone 9s both; }
+@keyframes g-phone {
+  0%, 88% { transform: none; }
+  90%, 94% { transform: rotate(-3deg); }
+  92% { transform: rotate(3deg); }
+  96%, 100% { transform: none; }
+}
+
+/* ---------- Liebes-Lügner ---------- */
+
+.sc-romance_scam .r-frame { transform-origin: 100% 100%; }
+.sc-romance_scam .r-ask { transform-origin: 80% 100%; }
+.sc-romance_scam .r-left,
+.sc-romance_scam .r-right { transform-origin: 50% 100%; }
+
+[data-state] .sc-romance_scam .h1,
+[data-state] .sc-romance_scam .h3 { animation: r-heart-in 9s ease-in-out both; }
+@keyframes r-heart-in {
+  0%, 3% { opacity: 0; transform: none; }
+  5% { opacity: 1; transform: none; }
+  13% { opacity: 1; transform: translate(-104px, -10px); }
+  15%, 100% { opacity: 0; transform: translate(-108px, -10px); }
+}
+
+[data-state] .sc-romance_scam .h2 { animation: r-heart-out 9s ease-in-out both; }
+@keyframes r-heart-out {
+  0%, 9% { opacity: 0; transform: none; }
+  11% { opacity: 1; transform: none; }
+  19% { opacity: 1; transform: translate(100px, 6px); }
+  21%, 100% { opacity: 0; transform: translate(104px, 6px); }
+}
+
+[data-state] .sc-romance_scam .r-beat { animation: r-beat 9s both; }
+@keyframes r-beat {
+  0%, 12%, 16%, 25%, 30%, 100% { transform: none; }
+  14%, 27.5% { transform: scale(1.15); }
+}
+
+[data-state] .sc-romance_scam .r-ask { animation: r-ask 9s both; }
+@keyframes r-ask {
+  0%, 35% { opacity: 0; transform: scale(0); }
+  36% { opacity: 1; transform: scale(0); }
+  39% { transform: scale(1.08); }
+  41%, 100% { opacity: 1; transform: none; }
+}
+
+[data-state] .sc-romance_scam .coin { animation: r-coin 9s ease-in-out both; }
+@keyframes r-coin {
+  0%, 43% { opacity: 0; transform: none; }
+  44% { opacity: 1; transform: none; }
+  47% { transform: translate(76px, -44px); }
+  50%, 100% { opacity: 1; transform: translate(152px, 50px); }
+}
+
+[data-state] .sc-romance_scam .r-frame { animation: r-frame 9s ease-in both; }
+@keyframes r-frame {
+  0%, 67% { transform: none; }
+  70% { transform: rotate(-6deg); }
+  77% { opacity: 1; }
+  79%, 100% { opacity: 0; transform: rotate(90deg); }
+}
+
+[data-state] .sc-romance_scam .r-fingers { animation: r-fingers 9s both; }
+@keyframes r-fingers {
+  0%, 69% { opacity: 1; }
+  71%, 100% { opacity: 0; }
+}
+
+[data-state] .sc-romance_scam .jump { animation: r-jump 9s both; }
+@keyframes r-jump {
+  0%, 78% { transform: none; }
+  81% { transform: translateY(-10px); }
+  84% { transform: none; }
+  87% { transform: translateY(-5px); }
+  90%, 100% { transform: none; }
+}
+
+/* The whole heart covers the seam between the halves until it breaks. */
+[data-state] .sc-romance_scam .r-whole { animation: r-whole 9s both; }
+@keyframes r-whole {
+  0%, 86% { opacity: 1; }
+  87%, 100% { opacity: 0; }
+}
+
+[data-state] .sc-romance_scam .r-left { animation: r-left 9s both; }
+@keyframes r-left {
+  0%, 86% { transform: none; }
+  92%, 100% { transform: translate(-2px, 1px) rotate(-16deg); }
+}
+
+[data-state] .sc-romance_scam .r-right { animation: r-right 9s both; }
+@keyframes r-right {
+  0%, 86% { transform: none; }
+  92%, 100% { transform: translate(2px, 1px) rotate(16deg); }
+}
+
+/* Coins leave one after the other (after the scene rules, which reset the delay). */
+[data-state] .sc .c2 { animation-delay: 0.25s; }
+[data-state] .sc .c3 { animation-delay: 0.5s; }
+[data-state] .sc-fake_profit .c2 { animation-delay: 0.6s; }
+[data-state] .sc-fake_profit .c3 { animation-delay: 1.2s; }
+[data-state] .sc-romance_scam .c2 { animation-delay: 0.5s; }
+[data-state] .sc-romance_scam .c3 { animation-delay: 1s; }
+[data-state] .sc-account_phishing .d2 { animation-delay: 0.2s; }
+[data-state] .sc-account_phishing .d3 { animation-delay: 0.4s; }
+[data-state] .sc-account_phishing .d4 { animation-delay: 0.6s; }
+
+/* ---------- Result: spotted. Once, 1.3 s, no idle loop ----------
+   0–0.4 s he stands there smug with his prop while the Lupe glides in; then hands up, the prop drops. */
+
+.sc-spotted .b-jump { transform-origin: 50% 100%; }
+
+[data-state] .sc-spotted .b-lupe { animation: b-lupe 0.4s var(--ease) both; }
+@keyframes b-lupe {
+  from { opacity: 0; transform: translate(80px, -40px) rotate(-25deg); } /* mirrored: comes in from the left */
+  50% { opacity: 1; }
+}
+
+[data-state] .sc-spotted .b-smug { animation: b-smug 0.4s both; }
+@keyframes b-smug {
+  0%, 99% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+[data-state] .sc-spotted .b-shake { animation: b-caught 0.4s both, b-shake 0.45s 0.85s both; }
+@keyframes b-caught {
+  0%, 99% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes b-shake {
+  20%, 60% { transform: rotate(-4deg); }
+  40%, 80% { transform: rotate(4deg); }
+}
+
+[data-state] .sc-spotted .b-prop { animation: b-prop 0.3s 0.4s ease-in both; }
+@keyframes b-prop {
+  0% { opacity: 0; transform: translate(12px, -14px); }
+  1% { opacity: 1; }
+}
+
+[data-state] .sc-spotted .b-jump { animation: b-jump 0.5s 0.4s both; }
+@keyframes b-jump {
+  40% { transform: translateY(-14px); }
+  75% { transform: scaleY(0.94); }
+}
+
+[data-state] .sc-spotted .b-lines { animation: b-lines 0.3s 0.5s both; }
+@keyframes b-lines {
+  from { opacity: 0; transform: scale(0.4); }
+}
+
+[data-state] .sc-spotted .b-drop { animation: b-drop 0.4s 0.8s both; }
+@keyframes b-drop {
+  from { opacity: 0; transform: translateY(-8px); }
+}
+
+/* ---------- Onlineschutz: he runs into the shield. Once, 3 s ---------- */
+
+.sc-blocked .k-run { transform-origin: 0 50%; }
+
+[data-state] .sc-blocked .k-run { animation: k-run 3s both; }
+@keyframes k-run {
+  0% { transform: translateX(120px); animation-timing-function: ease-in; }
+  24% { transform: translateX(-36px); }
+  28% { transform: translateX(-36px) scaleX(0.82); }
+  42% { transform: translate(4px, -10px) rotate(-10deg); }
+  54%, 100% { transform: rotate(-6deg); }
+}
+
+[data-state] .sc-blocked .k-shield { animation: k-shield 3s both; }
+@keyframes k-shield {
+  0%, 23%, 34%, 100% { transform: none; }
+  27% { transform: scale(1.1); }
+}
+
+[data-state] .sc-blocked .k-flash { animation: k-flash 3s both; }
+@keyframes k-flash {
+  0%, 23% { opacity: 0; transform: scale(0.8); }
+  26% { opacity: 1; }
+  40%, 100% { opacity: 0; transform: scale(1.3); }
+}
+
+[data-state] .sc-blocked .k-stars { animation: k-stars 3s ease-out both; }
+@keyframes k-stars {
+  0%, 44% { opacity: 0; transform: none; }
+  50% { opacity: 1; }
+  100% { opacity: 1; transform: rotate(360deg); }
+}
+
+[data-state] .sc-blocked .k-grin { animation: k-grin 3s both; }
+@keyframes k-grin {
+  0%, 24% { opacity: 1; }
+  26%, 100% { opacity: 0; }
+}
+
+[data-state] .sc-blocked .k-oh { animation: k-oh 3s both; }
+@keyframes k-oh {
+  0%, 24% { opacity: 0; }
+  26%, 100% { opacity: 1; }
+}
+
+[data-state] .sc-blocked .k-phone { animation: k-phone 3s both; }
+@keyframes k-phone {
+  0%, 28%, 38%, 100% { transform: none; }
+  33% { transform: translateY(-6px); }
+}
+
+/* ---------- Loader: read (0–1.7 s), link or tricks (to 3.5 s), think (until the answer), done ---------- */
+
+[data-phase] .ck-lupe { animation: ck-path 3.5s ease-in-out both; }
+@keyframes ck-path {
+  0% { opacity: 0; transform: translate(-50px, -14px) scale(0.5); }
+  6% { opacity: 1; transform: translate(-50px, -14px); }
+  20% { transform: translate(68px, -14px); }
+  24% { transform: translate(-48px, 6px); }
+  34% { transform: translate(50px, 6px); }
+  38% { transform: translate(-48px, 26px); }
+  48% { transform: translate(26px, 26px); }
+  54%, 62% { transform: translate(-14px, 52px); }
+  82%, 100% { opacity: 1; transform: translate(116px, -2px); }
+}
+
+[data-phase] .ln1 { animation: ck-ink 0.3s 0.6s both; }
+[data-phase] .ln2 { animation: ck-ink 0.3s 1.1s both; }
+[data-phase] .ln3 { animation: ck-ink 0.3s 1.6s both; }
+@keyframes ck-ink {
+  to { fill: #0050ff; }
+}
+
+[data-phase] .ck-link { animation: ck-link 3.5s ease-in-out both; }
+@keyframes ck-link {
+  0%, 56% { transform: none; }
+  60% { transform: translateY(-6px); }
+  80% { opacity: 1; transform: translate(168px, -22px) scale(0.3); }
+  84%, 100% { opacity: 0; transform: translate(168px, -22px) scale(0.2); }
+}
+[data-link='no'] .ck-link { display: none; }
+
+[data-phase] .ck-book { animation: ck-book 0.4s 1.6s var(--ease) both; }
+@keyframes ck-book {
+  from { opacity: 0; transform: scale(0.6); }
+  to { opacity: 1; transform: none; }
+}
+
+.ck-page { transform-origin: 0 50%; }
+[data-phase] .ck-page { animation: ck-flip 0.7s 2.2s infinite; }
+[data-phase='done'] .ck-page { animation: none; }
+@keyframes ck-flip {
+  50% { transform: scaleX(0); }
+  to { transform: scaleX(-1); }
+}
+
+[data-phase='think'] .ck-bob { animation: ck-bob 0.9s ease-in-out infinite alternate; }
+@keyframes ck-bob {
+  to { transform: translateY(-6px) rotate(-4deg); }
+}
+
+[data-phase='think'] .ck-dots { opacity: 1; }
+[data-phase='think'] .ck-dots circle { animation: ck-dot 0.9s ease-in-out infinite; }
+[data-phase='think'] .ck-dots circle:nth-child(2) { animation-delay: 0.15s; }
+[data-phase='think'] .ck-dots circle:nth-child(3) { animation-delay: 0.3s; }
+@keyframes ck-dot {
+  30% { transform: translateY(-6px); }
+  60%, 100% { transform: none; }
+}
+
+[data-phase='done'] .ck-tick { animation: ck-tick 0.35s var(--ease) both; }
+@keyframes ck-tick {
+  from { opacity: 0; transform: scale(0.3); }
+  to { opacity: 1; transform: none; }
+}
+
+[data-phase='done'] .ck-hop { animation: ck-hop 0.5s ease-out; }
+@keyframes ck-hop {
+  40% { transform: translateY(-14px); }
+}

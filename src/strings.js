@@ -1,16 +1,16 @@
 // Every visible text in both languages. index.html refers to these keys with
 // data-i18n (text), data-i18n-html (the few texts with markup), data-i18n-placeholder
-// and data-i18n-label (aria-label).
+// and data-i18n-label (aria-label); main.js adds the keys of the scam stories.
 // O₂ voice: short, spoken, no exclamation marks; German uses "du".
-// On Air has no "₂", so page text writes O<sub>2</sub>.   = no-break space, ‑ = no-break hyphen.
-// share.* texts leave the page (share sheet, e-mail), so they use plain characters.
+// On Air has no "₂", so page text writes O<sub>2</sub>.   = no-break space, ‑ = no-break hyphen.
+// {name} is a scam type's name. share.message.* texts leave the page (share sheet, e-mail), so they use plain characters.
 
 export const STRINGS = {
   de: {
     title: 'Ist das Betrug? · O₂ Scam-Check',
     product: 'Scam‑Check',
     'hero.title': 'Ist das Betrug?',
-    'hero.lead': 'Füg die Nachricht ein. Wir sagen dir sofort, woran du bist.',
+    'hero.lead': 'Füg die Nachricht ein. Wir sagen dir in Sekunden, woran du bist.',
 
     'form.label': 'Verdächtige Nachricht',
     'form.placeholder': 'SMS, E‑Mail oder Chat hier einfügen',
@@ -18,15 +18,22 @@ export const STRINGS = {
     'form.screenshot': 'Screenshot hochladen',
     'form.submit': 'Jetzt prüfen',
     'form.busy': 'Wir prüfen …',
-    'form.note': 'Kostenlos. Wir öffnen keine Links.',
     'form.empty': 'Füg zuerst eine Nachricht ein.',
 
-    'progress.read': 'Text gelesen',
-    'progress.link': 'Link geprüft',
-    'progress.done': 'Ergebnis fertig',
+    'progress.read': 'Wir lesen die Nachricht …',
+    'progress.link': 'Wir blättern in unserer Sperrliste …',
+    'progress.tricks': 'Wir suchen nach bekannten Maschen …',
+    'progress.think': 'Wir zählen eins und eins zusammen …',
+    'progress.done': 'Fertig.',
 
+    'result.spotted': 'Durchschaut: {name}',
     'result.steps': 'So bleibst du sicher',
     'result.call': '116 116 anrufen',
+    'result.trick': 'So läuft der Trick',
+
+    'compare.title': 'Echt oder Fake?',
+    'compare.fake': 'Fake',
+    'compare.real': 'Echt',
 
     'feedback.ask': 'War das hilfreich?',
     'feedback.yes': 'Ja',
@@ -41,10 +48,9 @@ export const STRINGS = {
     'protect.text':
       'Die Seite steht auf unserer Sperrliste. Onlineschutz blockiert sie automatisch im O<sub>2</sub> Netz, bevor sie lädt. Ohne Installation.',
     'protect.cta': 'Onlineschutz ansehen',
-    'protect.note': '',
 
     'share.title': 'Warn deine Liebsten.',
-    'share.text': 'Diese Masche ist weit verbreitet.',
+    'share.text': 'Der {name} ist gerade viel unterwegs.',
     'share.button': 'Warnung teilen',
     'share.email': 'E‑Mail',
     'share.copy': 'Kopieren',
@@ -56,19 +62,49 @@ export const STRINGS = {
     reset: 'Andere Nachricht prüfen',
     'notice.text': 'Diese Demo kennt bisher nur das Beispiel.',
 
+    'types.title': 'Kennst du diese Maschen?',
+    'types.tabs': 'Maschen',
+    'story.play': 'Abspielen',
+    'story.pause': 'Pause',
+    'story.replay': 'Nochmal ansehen',
+
+    'scam.parcel_scam.name': 'Paket‑Trickser',
+    'scam.parcel_scam.s1': 'Fake‑SMS',
+    'scam.parcel_scam.s2': 'Kleine Gebühr',
+    'scam.parcel_scam.s3': 'Karte geklaut',
+    'scam.parcel_scam.rule': 'Der Zoll schickt keine SMS mit Zahlungslinks.',
+    'scam.account_phishing.name': 'Konto‑Knacker',
+    'scam.account_phishing.s1': 'Konto gesperrt?',
+    'scam.account_phishing.s2': 'Falsches Log‑in',
+    'scam.account_phishing.s3': 'Konto leer',
+    'scam.account_phishing.rule': 'Log dich nur in der echten App ein.',
+    'scam.family_impersonation.name': 'Hallo‑Mama‑Schwindler',
+    'scam.family_impersonation.s1': 'Neue Nummer',
+    'scam.family_impersonation.s2': 'Bitte schnell Geld',
+    'scam.family_impersonation.s3': 'Geld weg',
+    'scam.family_impersonation.rule': 'Ruf dein Kind unter der alten Nummer an.',
+    'scam.fake_profit.name': 'Goldesel',
+    'scam.fake_profit.s1': 'Schnell reich?',
+    'scam.fake_profit.s2': 'Du zahlst ein',
+    'scam.fake_profit.s3': 'Alles weg',
+    'scam.fake_profit.rule': 'Großer Gewinn ohne Risiko? Gibt es nicht.',
+    'scam.romance_scam.name': 'Liebes‑Lügner',
+    'scam.romance_scam.s1': 'Große Liebe',
+    'scam.romance_scam.s2': 'Bitte Geld',
+    'scam.romance_scam.s3': 'Herz gebrochen',
+    'scam.romance_scam.rule': 'Schick nie Geld an jemanden, den du nie getroffen hast.',
+
     'upload.title': 'Screenshots prüfen wir bald.',
     'upload.text': 'Bitte hab noch etwas Geduld. Bis dahin kopier den Text und füg ihn ein.',
     'upload.ok': 'Alles klar',
     'upload.close': 'Schließen',
-
-    'footer.text': 'Scam‑Check ersetzt keinen Virenschutz.',
   },
 
   en: {
     title: 'Is this a scam? · O₂ Scam Check',
     product: 'Scam Check',
     'hero.title': 'Is this a scam?',
-    'hero.lead': 'Paste the message. We’ll tell you straight away where you stand.',
+    'hero.lead': 'Paste the message. We’ll tell you in seconds where you stand.',
 
     'form.label': 'Suspicious message',
     'form.placeholder': 'Paste a text, email or chat here',
@@ -76,15 +112,22 @@ export const STRINGS = {
     'form.screenshot': 'Upload a screenshot',
     'form.submit': 'Check now',
     'form.busy': 'Checking…',
-    'form.note': 'Free. We don’t open links.',
     'form.empty': 'Paste a message first.',
 
-    'progress.read': 'Message read',
-    'progress.link': 'Link checked',
-    'progress.done': 'Result ready',
+    'progress.read': 'Reading the message…',
+    'progress.link': 'Leafing through our blocklist…',
+    'progress.tricks': 'Looking for known tricks…',
+    'progress.think': 'Putting two and two together…',
+    'progress.done': 'Done.',
 
+    'result.spotted': 'Spotted: the {name}',
     'result.steps': 'How to stay safe',
     'result.call': 'Call 116 116',
+    'result.trick': 'How the trick works',
+
+    'compare.title': 'Real or fake?',
+    'compare.fake': 'Fake',
+    'compare.real': 'Real',
 
     'feedback.ask': 'Was this helpful?',
     'feedback.yes': 'Yes',
@@ -99,10 +142,9 @@ export const STRINGS = {
     'protect.text':
       'This site is on our blocklist. <span lang="de">Onlineschutz</span> blocks it automatically on the O<sub>2</sub> network, before it loads. Nothing to install.',
     'protect.cta': 'More about <span lang="de">Onlineschutz</span>',
-    'protect.note': 'Opens a page in German',
 
     'share.title': 'Warn your loved ones.',
-    'share.text': 'This scam is doing the rounds.',
+    'share.text': 'The {name} is doing the rounds.',
     'share.button': 'Share the warning',
     'share.email': 'Email',
     'share.copy': 'Copy',
@@ -114,11 +156,41 @@ export const STRINGS = {
     reset: 'Check another message',
     'notice.text': 'For now, this demo only works with the example.',
 
+    'types.title': 'Know these scams?',
+    'types.tabs': 'Scams',
+    'story.play': 'Play',
+    'story.pause': 'Pause',
+    'story.replay': 'Watch again',
+
+    'scam.parcel_scam.name': 'Parcel Trickster',
+    'scam.parcel_scam.s1': 'Fake text',
+    'scam.parcel_scam.s2': 'Tiny fee',
+    'scam.parcel_scam.s3': 'Card stolen',
+    'scam.parcel_scam.rule': 'Customs never text you a payment link.',
+    'scam.account_phishing.name': 'Account Cracker',
+    'scam.account_phishing.s1': 'Account locked?',
+    'scam.account_phishing.s2': 'Fake login',
+    'scam.account_phishing.s3': 'Account emptied',
+    'scam.account_phishing.rule': 'Only ever log in through the real app.',
+    'scam.family_impersonation.name': 'Hi‑Mum Faker',
+    'scam.family_impersonation.s1': 'New number',
+    'scam.family_impersonation.s2': 'Quick, send money',
+    'scam.family_impersonation.s3': 'Money gone',
+    'scam.family_impersonation.rule': 'Call your child on their old number.',
+    'scam.fake_profit.name': 'Golden Goose',
+    'scam.fake_profit.s1': 'Get rich quick?',
+    'scam.fake_profit.s2': 'You pay in',
+    'scam.fake_profit.s3': 'All gone',
+    'scam.fake_profit.rule': 'Big profit with no risk? No such thing.',
+    'scam.romance_scam.name': 'Love Liar',
+    'scam.romance_scam.s1': 'True love',
+    'scam.romance_scam.s2': 'Money, please',
+    'scam.romance_scam.s3': 'Heartbroken',
+    'scam.romance_scam.rule': 'Never send money to someone you’ve never met.',
+
     'upload.title': 'We’ll check screenshots soon.',
     'upload.text': 'Please bear with us. For now, copy and paste the text.',
     'upload.ok': 'Got it',
     'upload.close': 'Close',
-
-    'footer.text': 'Scam Check doesn’t replace antivirus software.',
   },
 }

@@ -4,13 +4,16 @@ Static frontend built with [Vite](https://vite.dev): plain HTML, CSS and JavaScr
 
 ## What it does
 
-One mobile-first page in O₂ design, in German and English (DE/EN switch, or `?lang=en`):
+One page in O₂ design, in German and English (DE/EN switch, or `?lang=en`). Phones get one column; desktops get the form on the left and everything else on the right.
 
 1. Paste a suspicious SMS, e-mail or chat message, or tap **Beispiel einfügen** for the demo example. Then tap **Jetzt prüfen**.
-2. The answer: verdict, why, what to do now, and the 116 116 card-blocking number in case you already entered details.
-3. Feedback (thumbs up/down plus an optional reason) is tied to the answer's `request_id`.
-4. If the link is already in the domain database, the page says that O₂ Onlineschutz would have blocked it, with a link to the Onlineschutz page.
-5. For a common scam, a card asks you to warn others: the native share sheet on phones, WhatsApp, e-mail or copy elsewhere.
+2. While it checks (about 5 seconds), a magnifying glass reads the message and looks the link up in the blocklist.
+3. The answer: verdict, why, the fake site next to the real one, what to do now, and the 116 116 card-blocking number in case you already entered details. For a known scam type, the "Trickser" in that scam's costume and a short cartoon of how the trick works.
+4. Feedback (thumbs up/down plus an optional reason) is tied to the answer's `request_id`.
+5. If the link is already in the domain database, the page says that O₂ Onlineschutz would have blocked it, with a link to the Onlineschutz page.
+6. For a common scam, a card asks you to warn others: the native share sheet on phones, WhatsApp, e-mail or copy elsewhere.
+
+Before anything is checked, the page shows the five common scam types as short cartoons (stacked on phones, tabs on desktop).
 
 The camera button only shows a "coming soon" popup for now. The backend is mocked in `src/demo.js` with a single demo case. Any other text shows a short demo notice.
 
@@ -45,6 +48,8 @@ index.html          page markup (entry point), no texts
 src/main.js         behaviour: language, check, result, feedback, share
 src/strings.js      all texts, German and English
 src/demo.js         backend stand-in: the example and its answer
+src/scenes.js       the cartoons (inline SVG): five scam stories, loader, result, Onlineschutz
+src/scenes.css      their animations
 src/style.css       styles (mobile first, O₂ tokens)
 public/             fonts, icons, logo, bubble, link-preview image (served as-is)
 docs/product.md     product context, backend proposal, UX decisions, open items
