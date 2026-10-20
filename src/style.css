@@ -43,6 +43,10 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: clip; /* the scam cards run to the window edge */
+}
+
 body {
   margin: 0;
   font: 16px/1.4 'On Air', Arial, sans-serif;
@@ -129,7 +133,8 @@ a {
 }
 .i-camera { --icon: url('/icons/camera.svg'); }
 .i-close { --icon: url('/icons/close.svg'); }
-.i-add { --icon: url('/icons/add.svg'); }
+.i-arrow-left { --icon: url('/icons/arrow-left.svg'); }
+.i-arrow-right { --icon: url('/icons/arrow-right.svg'); }
 .i-info { --icon: url('/icons/info.svg'); }
 .i-search { --icon: url('/icons/search.svg'); }
 .i-share { --icon: url('/icons/share.svg'); }
@@ -784,11 +789,14 @@ main {
   color: var(--blue);
 }
 
-/* ---------- The five scam types (below the form until something is checked): still tiles ---------- */
+/* ---------- The scam types (below the form until something is checked): a row of cards that scrolls sideways ---------- */
 
+/* --edge is the page margin: the row runs to the screen edges, so the next card peeks in, and its first card
+   lines up with the page. In vw and px only, so margin, padding and scroll-padding agree. */
 .types {
+  --edge: max(16px, (100vw - 640px) / 2 + 16px);
   display: grid;
-  gap: 16px;
+  gap: 12px;
   margin-top: 16px;
 }
 
@@ -801,96 +809,107 @@ main {
   font-size: 26px;
 }
 
+/* Padding above and below keeps the card shadows. With classic scrollbars the row is a little wider than
+   the window; html clips that (overflow-x: clip). */
 .tiles {
   display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: min(300px, 100% - 56px);
   gap: 12px;
-  margin: 0;
-  padding: 0;
+  margin: 0 calc(-1 * var(--edge));
+  padding: 8px var(--edge) 24px;
+  scroll-padding-inline: var(--edge);
+  scroll-snap-type: x mandatory;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
   list-style: none;
 }
 
-/* A white card holding a <details>: the whole closed tile is its summary, so all of it can be tapped.
-   No .card class: its padding would sit around the summary. */
-.tile {
-  border-radius: var(--radius);
-  background: #fff;
-  box-shadow: var(--shadow);
-}
-
-.tile summary {
-  display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
-  grid-template-rows: 1fr auto auto auto 1fr;
-  column-gap: 14px;
-  row-gap: 4px;
-  padding: 12px 16px 12px 12px;
-  border-radius: var(--radius);
-  list-style: none;
-  cursor: pointer;
-}
-
-.tile summary::-webkit-details-marker {
+.tiles::-webkit-scrollbar {
   display: none;
 }
 
-/* A placeholder until there are real images: the Trickser in the type's costume. */
-.tile-img {
-  position: relative;
-  grid-row: 1 / -1;
-  align-self: center;
-  aspect-ratio: 1;
-  border-radius: 14px;
-  background: var(--blue-soft);
+.tiles:focus-visible {
+  outline-offset: -3px;
 }
 
-/* Placed absolutely, so the drawing never sets the slot's size; the viewBox keeps it centred. */
-.tile-img .sc {
-  position: absolute;
-  top: 12%;
-  height: 76%;
+/* All cards are as tall as the tallest (grid), and the picture sits at the bottom, so the pictures line up.
+   Phones snap a card to the centre, so the cards before and after it peek in; the first and last stop at the edge. */
+.tile {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: var(--shadow);
+  scroll-snap-align: center;
 }
 
 .tile h3 {
-  grid-row: 2;
-  font-size: 17px;
+  padding: 20px 20px 0;
+  font-size: 20px;
   line-height: 1.2;
 }
 
-.tile-text {
-  display: block; /* a span: <summary> takes no <p> */
-  text-wrap: pretty;
-  grid-row: 3;
+.tile p {
+  padding: 6px 20px 0;
   color: var(--ink-2);
-  font-size: 15px;
   line-height: 1.35;
 }
 
-.tile-more {
-  grid-row: 4;
+.tile-img {
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.tile-img .sc {
+  background: var(--blue);
+}
+
+/* Under the row: ← the scroll position → */
+.tiles-nav {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 2px;
+  gap: 16px;
+  margin-top: -12px;
+}
+
+/* Outline, so „Jetzt prüfen“ stays the only filled button. */
+.nav-btn {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  background: #fff;
   color: var(--blue);
-  font-size: 15px;
-  font-weight: 700;
   transition: color 200ms var(--ease);
 }
 
-.tile-more .icon {
-  width: 16px;
-  height: 16px;
-  transition: transform 200ms var(--ease);
+.nav-btn[aria-disabled='true'] {
+  color: var(--line);
+  cursor: default;
 }
 
-[open] .tile-more .icon {
-  transform: rotate(45deg); /* the plus becomes a cross */
+/* A scrollbar to look at: the thumb is the part of the row on screen. */
+.tiles-bar {
+  position: relative;
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgb(0 0 30 / 0.12);
 }
 
-.tile-body {
-  display: grid;
-  gap: 14px;
-  padding: 4px 16px 16px;
+#tiles-thumb {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 2px;
+  background: var(--blue);
 }
 
 .share {
@@ -1008,7 +1027,7 @@ main {
     background: var(--blue-soft);
   }
 
-  .tile summary:hover .tile-more {
+  .nav-btn:not([aria-disabled='true']):hover {
     color: var(--blue-dark);
   }
 
@@ -1233,9 +1252,10 @@ main {
     width: auto;
   }
 
-  /* The scam tiles: 3 + 2, centred. Five across would leave too little room for „Hallo‑Mama‑Schwindler“ at 1024 px. */
+  /* The scam cards: 3 and a bit at 1024 px, 4 and a bit at 1440 px. */
   .types {
-    gap: 20px;
+    --edge: max(32px, (100vw - 1200px) / 2 + 32px);
+    gap: 16px;
     margin-top: 8px;
   }
 
@@ -1244,59 +1264,13 @@ main {
     font-size: 30px;
   }
 
-  /* align-items: start, so an open tile doesn't stretch its neighbours. */
   .tiles {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    align-items: start;
+    grid-auto-columns: 280px;
     gap: 20px;
   }
 
   .tile {
-    grid-column: span 2;
-  }
-
-  .tile:nth-child(4) {
-    grid-column: 2 / span 2;
-  }
-
-  .tile summary {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: none;
-    row-gap: 6px;
-    padding: 16px 20px 20px 16px;
-  }
-
-  /* A fixed 2:1, so real images can drop in later without moving anything; flat enough that
-     the second row starts on a 900 px screen. */
-  .tile-img {
-    grid-row: auto;
-    aspect-ratio: 2 / 1;
-    margin-bottom: 10px;
-  }
-
-  .tile-img .sc {
-    top: 14%;
-    height: 72%;
-  }
-
-  .tile h3,
-  .tile-text,
-  .tile-more {
-    grid-row: auto;
-    padding-left: 4px;
-  }
-
-  .tile h3 {
-    font-size: 20px;
-  }
-
-  .tile-text {
-    min-height: calc(2 * 1.35em); /* two lines, so closed tiles in a row end level */
-    font-size: 16px;
-  }
-
-  .tile-body {
-    padding: 0 20px 24px;
+    scroll-snap-align: start;
   }
 }
 

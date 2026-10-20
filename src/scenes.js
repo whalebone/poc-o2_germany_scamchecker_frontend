@@ -1,11 +1,21 @@
 // Small SVG cartoons. No words inside, so they work in both languages. Only the stories and the loader move
-// (CSS in scenes.css); the tile pictures, the spotted scene and the Onlineschutz picture are still.
+// (CSS in scenes.css); the card pictures, the spotted scene and the Onlineschutz picture are still.
 // The grammar of every story: your phone on the left is you, the Trickser on the right is him,
 // lila marks his things, and whatever moves to the right is lost. Each story ends with your coins at his feet.
 // at() places a part with a transform attribute; the class on the <g> inside it is what scenes.css animates
 // (a CSS transform would replace the attribute). Without animation every scene shows its first beat.
 
-export const SCAM_TYPES = ['parcel_scam', 'account_phishing', 'family_impersonation', 'fake_profit', 'romance_scam']
+// The order of the cards on the landing page: scams that come as messages first (that's what people paste),
+// then the two that mostly start as calls. bank_impersonation and tech_support have no story yet.
+export const SCAM_TYPES = [
+  'parcel_scam',
+  'account_phishing',
+  'family_impersonation',
+  'fake_profit',
+  'romance_scam',
+  'bank_impersonation',
+  'tech_support',
+]
 
 const INK = '#00001e'
 const BLUE = '#0050ff'
@@ -67,6 +77,9 @@ const PROFILE = `<rect x="-42" y="-46" width="84" height="92" rx="12" fill="#fff
   <path d="M-4-8Q0-4 4-8" fill="none" stroke="${INK}" stroke-width="2" stroke-linecap="round"/>
   <rect x="-30" y="28" width="34" height="6" rx="3" fill="${GREY}"/>
   <g transform="translate(24 31) scale(.7)">${HEART}</g>`
+// A telephone handset, upright: earpiece on top, mouthpiece at the bottom.
+const HANDSET = `<path d="M3-13C-5-6-5 6 3 13" fill="none" stroke="${INK}" stroke-width="6" stroke-linecap="round"/>
+  <rect x="-1" y="-20" width="11" height="10" rx="4" fill="${INK}"/><rect x="-1" y="10" width="11" height="10" rx="4" fill="${INK}"/>`
 const SHIELD = `<path d="M0-40L32-28V-2C32 20 17 33 0 41C-17 33-32 20-32-2V-28Z" fill="#fff"/>
   <path d="M-12 0L-3 9L13-8" fill="none" stroke="${BLUE}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>`
 
@@ -79,12 +92,19 @@ const HATS = {
   beanie: `<path d="M-22-21C-22-44 22-44 22-21Z" fill="${GREY}"/><rect x="-24" y="-26" width="48" height="8" rx="4" fill="${GREY}"/><circle cy="-43" r="6" fill="${GREY}"/>`,
   tophat: `<rect x="-15" y="-60" width="30" height="28" rx="3" fill="${INK}"/><rect x="-15" y="-40" width="30" height="5" fill="${ORANGE}"/><rect x="-24" y="-34" width="48" height="6" rx="3" fill="${INK}"/>`,
   bowtie: `<path d="M0 24L-11 17V31Z M0 24L11 17V31Z" fill="${ORANGE}"/><circle cy="24" r="3" fill="${ORANGE}"/>`,
+  // Shirt and tie: the bank clerk.
+  tie: `<path d="M-11 17L0 23L11 17L7 30C3 32-3 32-7 30Z" fill="#fff"/><path d="M-3 20H3L2 24H-2Z M-2 24H2L4 30L0 33L-4 30Z" fill="${DARK}"/>`,
+  // A headset with a microphone at his mouth: the support hotline.
+  headset: `<path d="M-28-8C-30-46 30-46 28-8" fill="none" stroke="${INK}" stroke-width="4"/>
+    <rect x="-34" y="-17" width="10" height="17" rx="4" fill="${INK}"/><rect x="24" y="-17" width="10" height="17" rx="4" fill="${INK}"/>
+    <path d="M-30 0C-30 12-21 16-12 15" fill="none" stroke="${INK}" stroke-width="3" stroke-linecap="round"/><circle cx="-10" cy="15" r="4" fill="${INK}"/>`,
 }
 const ARMS = {
   down: [[-27, 10, -37, 23], [27, 10, 37, 23]],
   up: [[-25, -6, -38, -26], [25, -6, 38, -26]],
   hold: [[-27, 6, -41, 14], [27, 10, 37, 23]],
   rod: [[-27, 4, -38, 2], [27, 10, 37, 23]],
+  phone: [[-27, 2, -36, -8], [27, 10, 37, 23]], // the handset at his ear
   stick: [[27, 10, 37, 23]], // the other hand holds the plate's stick in front of him (HAND)
 }
 const MOUTHS = {
@@ -207,13 +227,86 @@ const STORIES = {
     ${coins(68, 98)}`,
 }
 
-// One scam type's story, for the landing page and the result.
+// One scam type's story, for the result. Not every type has one yet.
+export const hasStory = (type) => type in STORIES
 export const story = (type) => svg(type, '12 18 296 156', `<g class="story-sc">${STORIES[type]}</g>`)
 
-// The Trickser in his costume: the picture on the landing page's scam tiles.
-const COSTUME = { parcel_scam: 'cap', account_phishing: 'beanie', fake_profit: 'tophat', romance_scam: 'bowtie' }
-export const avatar = (type) =>
-  svg('avatar', '-46 -64 92 108', type === 'family_impersonation' ? trickster({ arms: 'stick', front: HELD_PLATE }) : trickster({ hat: COSTUME[type] }))
+const COSTUME = {
+  parcel_scam: 'cap',
+  account_phishing: 'beanie',
+  bank_impersonation: 'tie',
+  tech_support: 'headset',
+  fake_profit: 'tophat',
+  romance_scam: 'bowtie',
+}
+
+// ---------- Landing page: one still picture per scam type, on its card's Beyond Blue panel ----------
+// The Trickser in his costume on a Dark Blue floor, his bait on the left. Everything but the floor gets a white
+// rim (the filter RIM, sticker style): on Beyond Blue, lila, grey and orange alone stay under 3:1.
+
+const FLOOR = `<ellipse cx="176" cy="150" rx="72" ry="12" fill="${DARK}"/>`
+const pose = (props) => `<g transform="translate(176 104) scale(1.3)">${trickster(props)}</g>`
+// His message: a lila bubble with its tail towards him.
+const bubble = (x, y, w, h, inner) => `<g transform="translate(${x} ${y})">
+  <path d="M${w - 22} ${h - 4}L${w + 8} ${h + 10}L${w - 6} ${h - 14}Z" fill="${LILA_SOFT}"/><rect width="${w}" height="${h}" rx="12" fill="${LILA_SOFT}"/>${inner}</g>`
+const coin = (x, y) => `<g transform="translate(${x} ${y})">${COIN}</g>`
+// A bank: a roof, three columns and a step.
+const BANK = `<path d="M0-15L18-6H-18Z" fill="${DARK}"/><path d="M-13-3V9M0-3V9M13-3V9" stroke="${DARK}" stroke-width="4.5"/><rect x="-19" y="10" width="38" height="5" rx="1.5" fill="${DARK}"/>`
+
+const PORTRAITS = {
+  // His parcel text with a fee and a link; he holds the parcel.
+  parcel_scam: `${bubble(16, 28, 96, 66, `<g transform="translate(28 30) scale(.8)">${BOX}${LID}</g>${coin(70, 28)}
+      <rect x="14" y="50" width="68" height="7" rx="3.5" fill="${LILA}"/>`)}
+    ${pose({ arms: 'hold', hat: 'cap', front: at(-46, 20, '', BOX + LID) })}`,
+
+  // He fishes with a fake login page on his line.
+  account_phishing: `${pose({ arms: 'rod', hat: 'beanie' })}
+    <path d="M128 108L66 28" stroke="${INK}" stroke-width="3.5" stroke-linecap="round"/>
+    <circle cx="116" cy="92" r="6" fill="${GREY}" stroke="${INK}" stroke-width="2"/>
+    <path d="M66 28V58" stroke="${LILA}" stroke-width="2"/>
+    <g transform="translate(40 58)"><rect width="52" height="64" rx="7" fill="#fff" stroke="${LILA}" stroke-width="3"/>
+      <path d="M21 17V13A5 5 0 0 1 31 13V17" fill="none" stroke="${LILA}" stroke-width="3"/><rect x="17" y="16" width="18" height="13" rx="3" fill="${LILA}"/>
+      <rect x="9" y="35" width="34" height="8" rx="2" fill="none" stroke="${GREY}" stroke-width="1.5"/>
+      <rect x="9" y="47" width="34" height="8" rx="2" fill="none" stroke="${GREY}" stroke-width="1.5"/></g>`,
+
+  // He calls as your bank and wants your money.
+  bank_impersonation: `${bubble(16, 30, 96, 56, `<g transform="translate(32 28)">${BANK}</g>${coin(72, 28)}`)}
+    ${pose({ arms: 'phone', hat: 'tie', front: `<g transform="translate(-41 -9)">${HANDSET}</g>` })}`,
+
+  // His texts from an unknown number: love, then money in a hurry. He hides behind the plate face.
+  family_impersonation: `${bubble(16, 26, 92, 40, `<circle cx="22" cy="20" r="11" fill="${LILA}"/>${text(22, 25, 15, '#fff', '?')}<g transform="translate(64 21)">${HEART}</g>`)}
+    ${bubble(16, 78, 92, 40, `${coin(30, 20)}<g transform="translate(64 20) scale(1.3)">${CLOCK}</g>`)}
+    ${pose({ arms: 'stick', front: HELD_PLATE })}`,
+
+  // A fake alarm on your laptop, and his cursor on your screen.
+  tech_support: `<g transform="translate(14 42)"><rect width="100" height="68" rx="7" fill="${INK}"/><rect x="6" y="6" width="88" height="56" rx="3" fill="#fff"/>
+      <path d="M-8 70H108L102 80H-2Z" fill="${INK}"/>
+      <path d="M44 14L66 50H22Z" fill="${LILA}" stroke="${DARK}" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M44 26V37" stroke="#fff" stroke-width="4" stroke-linecap="round"/><circle cx="44" cy="44" r="2.4" fill="#fff"/>
+      <path d="M70 34V54L75 49L79 57L84 55L80 47H87Z" fill="${LILA}" stroke="${DARK}" stroke-width="2" stroke-linejoin="round"/></g>
+    ${pose({ arms: 'rod', hat: 'headset' })}`,
+
+  // His crayon draws a chart that only goes up, on a dark board like a trading app; he holds the money sack.
+  fake_profit: `<g transform="translate(16 30)"><rect width="92" height="76" rx="10" fill="${DARK}"/><path d="M10 64H82" stroke="${LIGHT}" stroke-width="2"/>
+      <path d="M12 58L28 46L40 52L58 30L74 14" fill="none" stroke="${GREEN}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      ${at(74, 14, '', CRAYON)}</g>
+    ${at(122, 34, '', SPARK)}${at(12, 116, '', SPARK)}
+    ${pose({ arms: 'hold', hat: 'tophat', front: at(-44, 14, '', SACK) })}`,
+
+  // He holds up the sweet dating photo; hearts float up.
+  romance_scam: `<g transform="translate(32 44) scale(1.1)">${HEART}</g><g transform="translate(110 36) scale(.9)">${HEART}</g>
+    ${pose({ arms: 'hold', hat: 'bowtie' })}
+    <g transform="translate(86 86) scale(.82)">${PROFILE}</g>`,
+}
+
+export const portrait = (type) => svg('portrait', '0 14 280 154', `${FLOOR}<g filter="url(#rim)">${PORTRAITS[type]}</g>`)
+
+// The white rim: the figure's shape, grown by 3 units and filled white, behind it. Defined once for the page.
+export const RIM = `<svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
+  <filter id="rim" x="-5%" y="-5%" width="110%" height="110%">
+    <feMorphology in="SourceAlpha" operator="dilate" radius="3" result="grown"/><feFlood flood-color="#fff"/>
+    <feComposite in2="grown" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter></svg>`
 
 // ---------- Result: the Lupe has spotted the Trickser. A still picture ----------
 // His hands are up and his prop lies on the ground.
@@ -221,6 +314,7 @@ export const avatar = (type) =>
 const PROP = {
   parcel_scam: BOX + LID,
   account_phishing: KEY,
+  bank_impersonation: `<g transform="rotate(90)">${HANDSET}</g>`,
   fake_profit: SACK,
   romance_scam: `<g transform="scale(1.3)">${HEART}</g>`,
 }

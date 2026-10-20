@@ -83,24 +83,34 @@ check('an empty check focuses the field', (await focusedId(p)) === 'message')
 await p.fill('#message', 'x')
 check('typing hides and unlinks the hint', !(await visible(p, '#hint')) && (await p.getAttribute('#message', 'aria-describedby')) === null)
 
-// The scam types on the landing page: still tiles that open on tap
-p = await open()
-check('the landing page shows all 5 scam types as tiles', (await p.locator('.tile').count()) === 5 && (await visible(p, '#types')))
+// The scam types on the landing page: a row of cards that scrolls sideways
+p = await open('', { viewport: { width: 360, height: 780 } })
+const cards = await p.locator('.tile').count()
+check('the landing page shows all 7 scam types as cards', cards === 7 && (await visible(p, '#types')))
+check('the heading counts the cards', DE['types.title'].includes(String(cards)) && EN['types.title'].includes(String(cards)))
 await p.locator('#types').scrollIntoViewIfNeeded()
 await p.waitForTimeout(400)
 check('nothing moves on the landing page', (await p.evaluate(() => document.getAnimations().length)) === 0)
-check('the tiles start closed', (await p.locator('.tile .steps:visible').count()) === 0)
-check('a tile is at least 48 px tall to tap', (await p.locator('.tile summary').first().evaluate((el) => el.offsetHeight)) >= 48)
-await p.click('.tile:nth-child(1) summary')
-check('a tapped tile shows the three steps and the rule', (await p.locator('.tile:nth-child(1) .steps li:visible').count()) === 3 && (await visible(p, '.tile:nth-child(1) .rule')))
-await p.evaluate(() => (document.documentElement.style.overflowAnchor = 'none')) // like Safari: no scroll anchoring
-await p.locator('.tile:nth-child(2) summary').scrollIntoViewIfNeeded()
-const tileTop = await p.locator('.tile:nth-child(2) summary').evaluate((el) => el.getBoundingClientRect().top)
-await p.click('.tile:nth-child(2) summary')
-await p.waitForTimeout(100)
-const tileTopAfter = await p.locator('.tile:nth-child(2) summary').evaluate((el) => el.getBoundingClientRect().top)
-check('a tapped tile stays put when the open one above closes', Math.abs(tileTopAfter - tileTop) < 2, `${tileTop} -> ${tileTopAfter}`)
-check('only one tile is open at a time', (await p.locator('.tile details[open]').count()) === 1 && (await p.locator('.tile:nth-child(2) details').evaluate((el) => el.open)))
+check('every name fits its card at 360 px', await p.evaluate(() => [...document.querySelectorAll('.tile h3')].every((h) => h.scrollWidth <= h.clientWidth)))
+check('phones: the next card peeks in', await p.evaluate(() => {
+  const next = document.querySelector('.tile:nth-child(2)').getBoundingClientRect()
+  return next.left < innerWidth - 40 && next.right > innerWidth
+}))
+check('phones: the page does not scroll sideways', await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth))
+check('at the start only "next" works', (await p.getAttribute('#tiles-prev', 'aria-disabled')) === 'true' && (await p.getAttribute('#tiles-next', 'aria-disabled')) === 'false')
+await p.click('#tiles-next')
+await p.waitForTimeout(700)
+check('phones: "next" centres the next card, its neighbours peek in', await p.evaluate(() => {
+  const [a, b, c] = [1, 2, 3].map((n) => document.querySelector(`.tile:nth-child(${n})`).getBoundingClientRect())
+  return Math.abs((b.left + b.right) / 2 - innerWidth / 2) < 2 && a.right > 24 && c.left < innerWidth - 24
+}))
+check('then "back" works', (await p.getAttribute('#tiles-prev', 'aria-disabled')) === 'false')
+for (let i = 0; i < 7 && (await p.getAttribute('#tiles-next', 'aria-disabled')) === 'false'; i++) {
+  await p.click('#tiles-next')
+  await p.waitForTimeout(500)
+}
+check('at the end "next" is off and keeps its focus', (await p.getAttribute('#tiles-next', 'aria-disabled')) === 'true' && (await focusedId(p)) === 'tiles-next')
+check('the last card is fully on screen at the end', await p.locator('.tile:last-child').evaluate((el) => el.getBoundingClientRect().right <= innerWidth))
 
 // Example, checking and result
 p = await open()
@@ -216,21 +226,13 @@ check('with reduced motion, there is no play button', !(await visible(r, '#trick
 
 // Desktop
 const d = await open('', { viewport: { width: 1280, height: 800 }, mobile: false })
-check('desktop: one wide composer, the scam types below it at the same width', await d.evaluate(() => {
-  const box = (id) => document.getElementById(id).getBoundingClientRect()
-  const field = document.querySelector('.field').getBoundingClientRect()
-  return box('types').top > box('form').bottom && Math.abs(box('types').width - box('form').width) < 2 && box('submit').left > field.right
+check('desktop: one wide composer, the scam cards below it, lined up with it', await d.evaluate(() => {
+  const box = (el) => (typeof el === 'string' ? document.getElementById(el) : el).getBoundingClientRect()
+  const field = box(document.querySelector('.field'))
+  return box('types').top > box('form').bottom && Math.abs(box(document.querySelector('.tile')).left - box('form').left) < 2 && box('submit').left > field.right
 }))
-check('desktop: the tiles sit 3 + 2, the second row centred', await d.evaluate(() => {
-  const [a, b, c, e, f] = [...document.querySelectorAll('.tile')].map((el) => el.getBoundingClientRect())
-  const row = (x, y) => Math.abs(x.top - y.top) < 2
-  return row(a, b) && row(b, c) && row(e, f) && e.top > a.bottom && Math.abs(e.left - a.left - (b.left - a.left) / 2) < 2
-}))
-await d.click('.tile:nth-child(1) summary')
-check('desktop: an open tile does not stretch its neighbours', await d.evaluate(() => {
-  const [a, b] = [...document.querySelectorAll('.tile')].map((el) => el.getBoundingClientRect())
-  return a.height > b.height
-}))
+check('desktop: the page does not scroll sideways', await d.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth))
+check('desktop: more cards than fit, so "next" works', (await d.getAttribute('#tiles-next', 'aria-disabled')) === 'false')
 await d.click('#example')
 await d.focus('#message')
 await d.keyboard.press('Control+Enter')

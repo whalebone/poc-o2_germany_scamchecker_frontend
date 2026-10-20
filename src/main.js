@@ -3,7 +3,7 @@ import './style.css'
 import './scenes.css'
 import { STRINGS } from './strings.js'
 import { EXAMPLES, isExample, checkMessage, sendFeedback } from './demo.js'
-import { SCAM_TYPES, story, avatar, spotted, CHECKING, BLOCKED } from './scenes.js'
+import { SCAM_TYPES, hasStory, story, portrait, RIM, spotted, CHECKING, BLOCKED } from './scenes.js'
 
 const $ = (id) => document.getElementById(id)
 const form = $('form')
@@ -135,51 +135,52 @@ document.addEventListener('click', (event) => {
   }
 })
 
-// A scam type's three steps and the rule to remember, for its tile and its story.
-const steps = (type) => [1, 2, 3].map((n) => `<li data-i18n="scam.${type}.s${n}"></li>`).join('')
-const rule = (type) => `<p class="rule"><span class="icon i-tick" aria-hidden="true"></span><span data-i18n="scam.${type}.rule"></span></p>`
-
-// The story on the result: a heading with the play button, the cartoon, the steps (in step with it), the rule.
+// The story on the result: a heading with the play button, the cartoon, the three steps (in step with it)
+// and the rule to remember.
 const storyHTML = (type) => `
   <div class="story-head"><h2 data-i18n="result.trick"></h2><button type="button" class="scene-toggle"><span class="icon" aria-hidden="true"></span></button></div>
   <div class="scene">${story(type)}</div>
-  <ol class="beats">${steps(type)}</ol>${rule(type)}`
+  <ol class="beats">${[1, 2, 3].map((n) => `<li data-i18n="scam.${type}.s${n}"></li>`).join('')}</ol>
+  <p class="rule"><span class="icon i-tick" aria-hidden="true"></span><span data-i18n="scam.${type}.rule"></span></p>`
 
-// ---------- The five scam types on the landing page: still tiles that open on tap ----------
-// Closed: a picture (a placeholder until there are real images: the Trickser in the type's costume),
-// the name and one line. Open: the three steps and the rule. One open at a time (details name).
+// ---------- The scam types on the landing page: a row of cards that scrolls sideways ----------
+// Each card: the name, one line and a still picture. Nothing to open; the steps live in the result's story.
 
+const tiles = $('tiles')
+document.body.insertAdjacentHTML('beforeend', RIM) // the white rim of the pictures, defined once
 for (const type of SCAM_TYPES) {
-  $('tiles').insertAdjacentHTML(
+  tiles.insertAdjacentHTML(
     'beforeend',
-    `<li class="tile"><details name="scam-types">
-      <summary>
-        <span class="tile-img">${avatar(type)}</span>
-        <h3 data-i18n="scam.${type}.name"></h3>
-        <span class="tile-text" data-i18n="scam.${type}.text"></span>
-        <span class="tile-more"><span data-i18n="result.trick"></span><span class="icon i-add" aria-hidden="true"></span></span>
-      </summary>
-      <div class="tile-body"><ol class="steps">${steps(type)}</ol>${rule(type)}</div>
-    </details></li>`,
+    `<li class="tile">
+      <h3 data-i18n="scam.${type}.name"></h3>
+      <p data-i18n="scam.${type}.text"></p>
+      <div class="tile-img">${portrait(type)}</div>
+    </li>`,
   )
 }
 
-// Opening a tile closes the open one. If that one is above, the tapped tile would jump up:
-// Chrome's scroll anchoring makes up for it, Safari has none. So keep the tapped tile where it was.
-let tapped = null
-$('tiles').addEventListener('click', (event) => {
-  const summary = event.target.closest('summary')
-  if (summary) tapped = { summary, top: summary.getBoundingClientRect().top }
-})
-$('tiles').addEventListener(
-  'toggle',
-  (event) => {
-    if (!event.target.open || tapped?.summary.parentElement !== event.target) return
-    window.scrollBy(0, tapped.summary.getBoundingClientRect().top - tapped.top)
-    tapped = null
-  },
-  true, // toggle doesn't bubble
-)
+// The arrows move one card and do nothing at the ends (aria-disabled keeps their focus).
+// The bar under the row is a scrollbar to look at: its thumb is the part on screen.
+const prev = $('tiles-prev')
+const next = $('tiles-next')
+const cardStep = () => tiles.firstElementChild.offsetWidth + parseFloat(getComputedStyle(tiles).columnGap)
+
+function updateTilesNav() {
+  const max = tiles.scrollWidth - tiles.clientWidth
+  prev.setAttribute('aria-disabled', tiles.scrollLeft <= 1)
+  next.setAttribute('aria-disabled', tiles.scrollLeft >= max - 1)
+  $('tiles-thumb').style.width = `${(100 * tiles.clientWidth) / tiles.scrollWidth}%`
+  $('tiles-thumb').style.left = `${(100 * tiles.scrollLeft) / tiles.scrollWidth}%`
+}
+
+for (const [button, direction] of [[prev, -1], [next, 1]]) {
+  button.addEventListener('click', () => {
+    if (button.getAttribute('aria-disabled') === 'true') return
+    tiles.scrollBy({ left: direction * cardStep(), behavior: scrollBehavior() })
+  })
+}
+tiles.addEventListener('scroll', updateTilesNav, { passive: true })
+new ResizeObserver(updateTilesNav).observe(tiles) // also when the row comes back after a result
 
 // ---------- Message field ----------
 
@@ -355,8 +356,8 @@ function showResult(answer) {
 
   setFeedback('ask')
 
-  $('trick').hidden = !type
-  if (type) {
+  $('trick').hidden = !hasStory(type)
+  if (hasStory(type)) {
     $('trick-story').innerHTML = storyHTML(type)
     translate($('trick-story'))
     watch($('trick-story'))

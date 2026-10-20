@@ -14,7 +14,7 @@ const ANSWERS = {
     verdict: 'scam', // scam | caution | ok
     type: 'parcel_scam', // a known, common scam type, or null
     headline: 'Finger weg. Das ist Betrug.',
-    reason: `Die SMS tut so, als käme sie vom Zoll. Der Link führt aber zu ${DOMAIN}, nicht zum echten zoll.de. Die 2,99 € sind nur der Köder: Eigentlich wollen die Betrüger deine Kartendaten.`,
+    reason: `Der Link führt zu ${DOMAIN}, nicht zum echten zoll.de. Die 2,99 € sind nur der Köder für deine Kartendaten.`,
     // malicious = in our domain database; imitates = the real site the link pretends to be, or null.
     // The reason names both; the page highlights them.
     link: { domain: DOMAIN, status: 'malicious', imitates: 'zoll.de' },
@@ -25,7 +25,7 @@ const ANSWERS = {
     verdict: 'scam',
     type: 'parcel_scam',
     headline: 'Steer clear. This is a scam.',
-    reason: `The text pretends to come from German Customs, but the link leads to ${DOMAIN}, not the real zoll.de. The €2.99 fee is just the bait: what they’re really after is your card details.`,
+    reason: `The link leads to ${DOMAIN}, not the real zoll.de. The €2.99 fee is just bait for your card details.`,
     link: { domain: DOMAIN, status: 'malicious', imitates: 'zoll.de' },
     next_steps: ['Don’t tap the link.', 'Delete the text.'],
     if_it_happened: 'Already entered your details? Call 116 116 or your bank to cancel your card.',

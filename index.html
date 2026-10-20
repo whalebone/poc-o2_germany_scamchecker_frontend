@@ -135,10 +135,20 @@
         </div>
       </section>
 
-      <!-- The five scam types as still tiles: rows on phones, 3 + 2 on desktop. Filled by main.js. -->
+      <!-- The scam types as a row of cards that scrolls sideways (swipe, the arrows or the arrow keys). Filled by main.js.
+           role="list": Safari drops the list role when list-style is none. -->
       <section class="types" id="types" aria-labelledby="types-title">
         <h2 id="types-title" data-i18n="types.title"></h2>
-        <ul class="tiles" id="tiles"></ul>
+        <ul class="tiles" id="tiles" role="list" tabindex="0" aria-labelledby="types-title"></ul>
+        <div class="tiles-nav">
+          <button type="button" class="nav-btn" id="tiles-prev" data-i18n-label="types.prev">
+            <span class="icon i-arrow-left" aria-hidden="true"></span>
+          </button>
+          <span class="tiles-bar" aria-hidden="true"><span id="tiles-thumb"></span></span>
+          <button type="button" class="nav-btn" id="tiles-next" data-i18n-label="types.next">
+            <span class="icon i-arrow-right" aria-hidden="true"></span>
+          </button>
+        </div>
       </section>
     </main>
 
