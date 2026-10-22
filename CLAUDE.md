@@ -1,12 +1,12 @@
 # CLAUDE.md
 
-Frontend-only PoC for the O₂ Germany Scam Checker: a static site built with Vite (plain HTML, CSS and JavaScript) and hosted on Netlify. The backend is a separate project — nothing server-side lives in this repo.
+Frontend-only PoC for the O₂ Germany Scam Checker: a static site built with Vite (plain HTML, CSS and JavaScript) and hosted on Netlify. The backend is a separate project (`whalebone/scam-check`) — nothing server-side lives in this repo.
 
-Status: demo page with one example flow (a fake customs/parcel SMS), in German and English. The landing page shows seven common scam types (taken from O₂ CZ) as a row of cards that scrolls sideways; the result explains the detected type with an animated story. Separate layouts for phones (one column) and desktop (from 1024 px: a wide composer, then full-width split cards). The backend is mocked in `src/demo.js`.
+Status: one example flow (a fake customs/parcel SMS) with a stand-in answer, in German and English, and the real backend connected for any other text when `VITE_API_URL` is set (locally via `.env.development.local`; not on Netlify yet: it needs a token source). The landing page shows seven common scam types (taken from O₂ CZ) as a row of cards that scrolls sideways; the result explains the detected type with an animated story. Separate layouts for phones (one column) and desktop (from 1024 px: a wide composer, then full-width split cards).
 
 **Before any UI or UX work, read `docs/product.md`.** It holds:
 - the product goal and the owner's requirements
-- the backend proposal (all fields)
+- the backend: its contract, how the page reads each field, what it still lacks
 - the O₂ Onlineschutz facts behind the upsell
 - every UX decision with its reason, and the measured layout limits
 - the open items
@@ -26,7 +26,7 @@ Don't redo that research. Update the file when a decision changes.
 - `npm run dev` — dev server with live reload at http://localhost:5180
 - `npm run build` — production build into `dist/` (what Netlify runs)
 - `npm run preview` — serve the built `dist/` locally
-- `npm run check` — behaviour checks against the running dev server (language, scam carousel, check flow, result, feedback, share, keyboard, contrast)
+- `npm run check` — behaviour checks against the running dev server (language, scam carousel, check flow, result, feedback, share, keyboard, contrast), then the real backend's part: it starts a second dev server on port 5181 with `VITE_API_URL` set and answers its calls in the browser (verdicts, token, errors). Checks never reach the real backend.
 - `npm run shots` — screenshots of every state into `shots/` (git-ignored): phone 390 px German, small phones, English at 360 px, desktop 1440 and 1024 px
 - `npm run og` — re-render `public/og.jpg` (link preview) after changing the hero title or logo
 
@@ -43,17 +43,19 @@ On Windows, `runapp.bat` starts the dev server in the background and opens the b
 
 ## Layout
 
-- `index.html` — page markup and entry point; every state (checking, result, demo notice, screenshot popup) is a `hidden` section
+- `index.html` — page markup and entry point; every state (checking, result, notice for the demo or an error, screenshot popup) is a `hidden` section
 - `src/main.js` — JavaScript entry (imports `style.css`): language, check flow, result, feedback, share
 - `src/strings.js` — every visible text, German (`de`) and English (`en`) with the same keys
-- `src/demo.js` — stand-in for the backend: the example message and its answer (`POST /v1/scam-check`), feedback logging (`POST /v1/feedback`)
+- `src/api.js` — the real backend: `POST /v1/scam-check` and `POST /v1/feedback`, the token, errors, and the map from its threat types to the page's seven
+- `src/demo.js` — the example message and its stand-in answer, in the backend's shape; feedback on it is only logged
+- `.env.example` — what to put in `.env.development.local` (git-ignored) to talk to the real backend locally
 - `src/scenes.js` — the cartoons as inline SVG strings: the five scam stories, the loader, the still "spotted" picture, the still Onlineschutz picture, the card pictures (with their white-rim filter)
 - `src/scenes.css` — their keyframes; stories play once via `data-state` (set in `main.js`), the loader via `data-phase`
 - `src/style.css` — styles, mobile first
 - `public/` — static files served as-is from the site root: On Air fonts, O₂ icons and logo, the hero bubble, `og.jpg` (link preview)
-- `vite.config.js` — dev server port 5180 (also set in both `.bat` files); fills in `__SITE_URL__` for the link preview
-- `netlify.toml` — Netlify build settings
-- `docs/product.md` — product context, backend proposal, UX decisions, open items
+- `vite.config.js` — dev server port 5180 (also set in both `.bat` files); proxies `/api` to `API_PROXY`; fills in `__SITE_URL__` for the link preview
+- `netlify.toml` — Netlify build settings, and the `/api` redirect to the backend (commented out until there's a token source)
+- `docs/product.md` — product context, the backend and its gaps, UX decisions, open items
 - `scripts/` — `check.mjs`, `shots.mjs`, `og.mjs` (see Commands)
 - `.claude/skills/o2-design/` — O₂ brand design skill
 
@@ -64,9 +66,14 @@ On Windows, `runapp.bat` starts the dev server in the background and opens the b
 - O₂ voice in both languages: short, spoken, no exclamation marks; German uses "du" and „…“, English is British.
 - On Air has no "₂" glyph: page text writes `O<sub>2</sub>` (via `data-i18n-html`). Plain "O₂" is fine only where On Air isn't used (tab title, meta tags, shared texts).
 
-## Backend hand-over
+## Backend
 
-`src/demo.js` returns only the key fields of the proposed response: `request_id`, `verdict`, `type`, `headline`, `reason`, `link { domain, status, imitates }`, `next_steps`, `if_it_happened`. To go live, replace `checkMessage()` and `sendFeedback()` with `fetch` calls and drop `isExample()` and the demo notice. `link.status === 'malicious'` (known in the domain database) shows the Onlineschutz upsell; a known `type` (one of the seven in `SCAM_TYPES`) shows the Trickser in its costume, its story (five types have one) and the share card; `link.imitates` (the real site, e.g. `zoll.de`) and `link.domain` get marked green and red where the `reason` names them. The page keeps the loader on screen for at least 3.5 s.
+`github.com/whalebone/scam-check`, branch `ai-239-scam-check-mvp`; its `api/swagger.yml` is the contract. dev1: `https://scam-check.dev1.whalebone.io`, behind a `wb-auth-proxy` front door. `docs/product.md` has the field-by-field map and what the backend still lacks.
+
+- **Locally:** copy `.env.example` to `.env.development.local`, put in a token, and the running dev server restarts on its own. Then the example still gets its stand-in answer, and any other text goes to dev1 through the dev server's `/api` proxy. Each real check counts against that token's 20 per day.
+- **The page reads the backend's shape directly** (`showResult()` in `main.js`): `answer_id`; `answer.verdict` (`scam` · `caution` · `legit`) sets `data-verdict`; `answer.threat_type` maps to one of the seven `SCAM_TYPES` via `scamType()` in `api.js`, only for `scam`; `summary` is the headline, `explanation` the reason, `what_to_do` the steps, `if_already_happened` the help line; `official_domains` are marked green. `links: [{ domain, signal }]` isn't in the backend yet: `signal === 'strong'` shows Onlineschutz and the domains are marked red. `demo.js` sends it for the example.
+- **Token:** the integration JWT goes raw into `Authorization`; each response's `Wb-Token` replaces it (valid 15 minutes), and a 401 starts over once with the configured one.
+- The page keeps the loader on screen for at least 3.5 s.
 
 ## Design: o2-design skill
 
@@ -84,6 +91,9 @@ Netlify's production branch is `dev` (set in the Netlify UI), so every push to `
 ## Gotchas
 
 - `.bat` files must keep CRLF line endings (enforced by `.gitattributes`).
+- Never set `VITE_API_TOKEN` on Netlify, and never commit `.env.development.local`: Vite builds `VITE_*` values into the public JavaScript (that file only reaches the dev server).
+- The backend's front door answers every request without a token with a 401, also the CORS preflight. Call it through `/api` on the page's own origin, never cross-origin.
+- With `.env.development.local` in place the dev server is live: `npm run check` then skips the demo-notice check, and `npm run shots` shows the error notice as `m17`.
 - To change the port, update `vite.config.js`, `runapp.bat` and `shutdown.bat` together.
 - Put `:hover` styles inside `@media (hover: hover)`; on phones a hover state sticks after a tap.
 - Text fields need a font size of 16 px or more, or iOS zooms in on focus.

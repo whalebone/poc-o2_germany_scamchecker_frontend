@@ -19,6 +19,7 @@ export const STRINGS = {
     'form.submit': 'Jetzt prüfen',
     'form.busy': 'Wir prüfen …',
     'form.empty': 'Füg zuerst eine Nachricht ein.',
+    'form.long': 'Das ist zu lang. Füg nur die Nachricht selbst ein.',
 
     'progress.read': 'Wir lesen die Nachricht …',
     'progress.link': 'Wir blättern in unserer Sperrliste …',
@@ -54,9 +55,22 @@ export const STRINGS = {
     'share.subject.parcel_scam': 'Vorsicht vor falschen Paket-SMS',
     'share.message.parcel_scam':
       'Vorsicht vor falschen Paket-SMS: Die „Zollgebühr“ ist ein Trick, um an deine Kartendaten zu kommen. Tipp nicht auf den Link. Verdächtige Nachrichten prüfst du mit dem O₂ Scam-Check:',
+    'share.subject.account_phishing': 'Vorsicht vor falschen Konto-Warnungen',
+    'share.message.account_phishing':
+      'Vorsicht vor falschen Konto-Warnungen: Wer mit einer Sperre droht und einen Link zum Einloggen schickt, will deine Zugangsdaten. Log dich nur in der echten App ein. Verdächtige Nachrichten prüfst du mit dem O₂ Scam-Check:',
+    'share.subject.family_impersonation': 'Vorsicht vor „Hallo Mama“-Nachrichten',
+    'share.message.family_impersonation':
+      'Vorsicht vor „Hallo Mama“-Nachrichten: Wer als dein Kind von einer neuen Nummer schreibt und schnell Geld braucht, ist oft ein Betrüger. Ruf dein Kind unter der alten Nummer an. Verdächtige Nachrichten prüfst du mit dem O₂ Scam-Check:',
+    'share.subject.fake_profit': 'Vorsicht vor falschen Geldanlagen',
+    'share.message.fake_profit':
+      'Vorsicht vor falschen Geldanlagen: Großen Gewinn ohne Risiko gibt es nicht. Wer dich zum Einzahlen drängt, will nur dein Geld. Verdächtige Nachrichten prüfst du mit dem O₂ Scam-Check:',
 
     reset: 'Andere Nachricht prüfen',
     'notice.text': 'Diese Demo kennt bisher nur das Beispiel.',
+    'notice.retry': 'Nochmal versuchen',
+    'error.failed': 'Wir konnten die Nachricht gerade nicht prüfen. Tipp so lange auf keinen Link.',
+    'error.busy': 'Gerade prüfen sehr viele. Versuch es in einer Minute noch mal.',
+    'error.quota': 'Du hast heute schon viele Nachrichten geprüft. Morgen geht’s weiter.',
 
     'types.title': 'Kennst du diese 7 Maschen?', // 7 = the cards in SCAM_TYPES (check.mjs compares)
     'types.prev': 'Vorherige Masche',
@@ -119,6 +133,7 @@ export const STRINGS = {
     'form.submit': 'Check now',
     'form.busy': 'Checking…',
     'form.empty': 'Paste a message first.',
+    'form.long': 'That’s too long. Paste just the message itself.',
 
     'progress.read': 'Reading the message…',
     'progress.link': 'Leafing through our blocklist…',
@@ -154,9 +169,22 @@ export const STRINGS = {
     'share.subject.parcel_scam': 'Watch out for fake parcel texts',
     'share.message.parcel_scam':
       'Watch out for fake parcel texts: the ‘customs fee’ is a trick to get your card details. Don’t tap the link. Check suspicious messages with O₂ Scam Check:',
+    'share.subject.account_phishing': 'Watch out for fake account warnings',
+    'share.message.account_phishing':
+      'Watch out for fake account warnings: a message that threatens to lock your account and sends a login link is after your details. Only ever log in through the real app. Check suspicious messages with O₂ Scam Check:',
+    'share.subject.family_impersonation': 'Watch out for ‘Hi Mum’ messages',
+    'share.message.family_impersonation':
+      'Watch out for ‘Hi Mum’ messages: someone texting as your child from a new number and needing money fast is often a scammer. Call your child on their old number. Check suspicious messages with O₂ Scam Check:',
+    'share.subject.fake_profit': 'Watch out for fake investments',
+    'share.message.fake_profit':
+      'Watch out for fake investments: big profits with no risk don’t exist. Whoever pushes you to pay in just wants your money. Check suspicious messages with O₂ Scam Check:',
 
     reset: 'Check another message',
     'notice.text': 'For now, this demo only works with the example.',
+    'notice.retry': 'Try again',
+    'error.failed': 'We couldn’t check the message just now. Until then, don’t tap any links.',
+    'error.busy': 'Lots of people are checking right now. Try again in a minute.',
+    'error.quota': 'You’ve checked a lot of messages today. You can check more tomorrow.',
 
     'types.title': 'Know these 7 scams?',
     'types.prev': 'Previous scam',

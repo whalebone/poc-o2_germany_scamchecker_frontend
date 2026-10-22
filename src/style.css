@@ -30,7 +30,10 @@
   --soft: #f3f3f5;
   --danger: #d42e50; /* status error; 4.9:1 on white, so it works for text */
   --danger-soft: #fff0f3;
-  --green-soft: #ddf7ea; /* a tint of the O₂ accent green, only behind the real site in the reason */
+  --warning: #ffa55a; /* status warning (O₂ orange): ink on it, white would be 1.9:1 */
+  --warning-soft: #fff4ea;
+  --green: #00dc7d; /* status success: ink on it, never as a text colour (1.9:1 on white) */
+  --green-soft: #ddf7ea; /* behind the real site in the reason, and the legit verdict's tint */
   --gradient: linear-gradient(180deg, #00008c 0%, #0050ff 80%, #246cff 100%); /* functional Blauverlauf */
   --shadow: 0 4px 16px rgb(0 0 30 / 0.08);
   --radius: 20px;
@@ -466,10 +469,22 @@ main {
   overflow: hidden;
 }
 
-/* The backend's verdict sets the tone; the demo only has scam. */
+/* The backend's verdict sets the tone. Caution (also the backend's fallback) and legit are plain until designed. */
 .verdict[data-verdict='scam'] {
   --tone: var(--danger);
   --tone-soft: var(--danger-soft);
+}
+
+.verdict[data-verdict='caution'] {
+  --tone: var(--warning);
+  --tone-soft: var(--warning-soft);
+  --tone-ink: var(--ink);
+}
+
+.verdict[data-verdict='legit'] {
+  --tone: var(--green);
+  --tone-soft: var(--green-soft);
+  --tone-ink: var(--ink);
 }
 
 /* The tinted head: the still picture with the type as its caption (or the icon). */
@@ -488,7 +503,7 @@ main {
   height: 48px;
   border-radius: 50%;
   background: var(--tone);
-  color: #fff;
+  color: var(--tone-ink, #fff);
 }
 
 .verdict-icon .icon {
@@ -931,6 +946,10 @@ main {
 
 .notice > .icon {
   color: var(--blue);
+}
+
+#notice-text:focus {
+  outline: 0; /* it gets focus after a failed check, like the headline after an answer */
 }
 
 /* ---------- Screenshot popup: bottom sheet on phones, centred on larger screens ---------- */

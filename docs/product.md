@@ -1,6 +1,6 @@
 # O₂ Scam-Check: product context and UX decisions
 
-Read this before UI or UX work. It holds what the page is built on: the brief, the backend proposal, the O₂ Onlineschutz facts and the decisions from the product-designer reviews of round 1 (2026-10-19) and rounds 2, 3 and 4 (all 2026-10-20). Update it when a decision changes, so the next session doesn't redo the research.
+Read this before UI or UX work. It holds what the page is built on: the brief, the backend and how the page reads it, the O₂ Onlineschutz facts and the decisions from the product-designer reviews of round 1 (2026-10-19) and rounds 2, 3 and 4 (all 2026-10-20). Update it when a decision changes, so the next session doesn't redo the research.
 
 ## The product
 
@@ -49,33 +49,47 @@ Round 4 (feedback on the deployed round 3, 2026-10-20):
 - Optionally take over O₂ CZ's categories, "to already use what someone tested".
 - "Super understandable overall with as minimum amount of text as possible."
 
-## Backend proposal (from the brief; not built)
+## The backend (built; connected on 2026-10-22)
 
-`POST /v1/scam-check` with `{ "text": "…", "language": "de" }`. The target is an answer in under 5 s.
+`github.com/whalebone/scam-check`, branch `ai-239-scam-check-mvp` (Jira epic AI-239; `main` is still the Go template). The contract is its `api/swagger.yml`, the reasons are in its `docs/DESIGN.md`. Running on dev1: `https://scam-check.dev1.whalebone.io`. Go, one Gemini call (`gemini-3.5-flash-lite` on Vertex AI, EU) after four evidence tools run in parallel (Whalebone threat intelligence via feed-warden, WHOIS, one HTTP probe, a TLS check), then a DNS check of the official domains. Answers are stored in Postgres with their id.
 
-| Field | Values | Used by the page for |
-|---|---|---|
-| `request_id` | `"sc_8f3k2p"` | the feedback call |
-| `verdict` | `scam` · `caution` · `ok` | tone of the verdict card (`data-verdict`) |
-| `type` | `parcel_scam` · `account_phishing` · `family_impersonation` · `fake_profit` · `romance_scam` · `bank_impersonation` · `tech_support` (**the last two new in round 4**) · `null` | a known type shows the Trickser in its costume, the „Durchschaut“ tag, its story (if drawn) and the share card |
-| `headline` | "Finger weg. Das ist Betrug." | verdict |
-| `reason` | 2 short sentences | the main message under the headline; `link.domain` and `link.imitates` in it get marked |
-| `link` | `{ domain, owner, status: malicious · legit · unknown, imitates }` or `null` | `malicious` shows the Onlineschutz card; `owner` isn't used |
-| `link.imitates` | `"zoll.de"` or `null` (**new in round 2**) | the real site the link pretends to be: marked green in the reason |
-| `next_steps` | 1–2 strings | "So bleibst du sicher", numbered |
-| `if_it_happened` | string or `null` | the help line; "116 116" becomes a `tel:` link |
+**Calls.** Both go through the front door, a `wb-auth-proxy`:
+- `POST /v1/scam-check { message (max 4000), language: de · en · cs }` → `{ answer_id, answer, fallback, timing, versions }`. A model failure or an overrun of the 5 s deadline is a `caution` answer with `fallback: true`, never an error.
+- `POST /v1/feedback { answer_id, rating: up · down, comment (max 500) }` → `200`. A second rating replaces the first; a foreign or unknown id is `404`.
+- **Token:** an HS256 integration JWT (`client_id`, `user_id`, `exp`) goes raw into `Authorization`, without "Bearer". Every response carries a fresh one in `Wb-Token`, valid **15 minutes** (measured: the refreshed token expires 15 min after the call, whatever the original's expiry).
+- **Limits:** 20 checks per `user_id` per UTC day (`429 QUOTA_EXCEEDED`), 60 per tenant per minute (`429 RATE_LIMITED`), and the proxy's own limit per client, user and IP (plain-text `429 Limit exceeded`). Feedback is free.
+- **The front door answers everything without a token with a plain-text 401**, also `/health/check` and the CORS preflight (`OPTIONS`, verified 2026-10-22). A browser can't call it from another origin, so the page calls `/api` on its own origin: the Vite dev server proxies it (`API_PROXY` in `.env.development.local`), Netlify will with a redirect (prepared in `netlify.toml`).
 
-- **The `reason` contract** (round 4): 2 short sentences. Where the link really goes and the real site it pretends to be (with `link.domain` and `link.imitates` written exactly as sent; case matters), then what they're after. A domain that isn't in the text just isn't marked. Round 3 had 2–3 sentences and opened with who the message pretends to be; the real site already says that.
+**How the page reads the answer** (`showResult()` in `main.js`; `api.js` holds the type map):
+
+| Backend field | Page |
+|---|---|
+| `answer_id` | the feedback call |
+| `answer.verdict`: `scam` · `caution` · `legit` | `data-verdict` on the card (the brief said `ok`; it's `legit`) |
+| `answer.threat_type` | `scamType()`: `parcel_delivery` → Paket‑Trickser, `credential_phishing` and `banking_phishing` → Konto‑Knacker, `family_emergency` → Hallo‑Mama, `investment_crypto` → Goldesel. The others (`payment_card_theft`, `malware_delivery`, `fake_shop`, `authority_impersonation`, `telecom_impersonation`, `other`, `none`) get the plain Trickser, no story, no share. Only for `scam`. |
+| `answer.summary` (1 sentence) | the headline |
+| `answer.explanation` (≤ 3 sentences) | the reason; domains in it get marked |
+| `answer.official_domains` | marked green in the reason (was `link.imitates`) |
+| `answer.what_to_do` (2–4) | „So bleibst du sicher“ |
+| `answer.if_already_happened` (list, empty for `legit`) | joined into the help line; „116 116“ stays a `tel:` link |
+| `answer.impersonated_entity`, `language`, `fallback`, `timing`, `versions` | not shown |
+| `links: [{ domain, signal }]` (**asked for, not built**) | `signal: strong` shows Onlineschutz; the domains are marked red |
+
+**Measured on dev1** (2026-10-22, 5 checks: 1 by curl, 4 from the page): 1.5–3.0 s round trips from the page through the dev proxy; the curl call took 5.1 s with `total_ms` 3.2 s. The 3.5 s loader minimum hides most of it. The example SMS got `scam` / `parcel_delivery` / Zoll; a fake Sparkasse login `scam` / `banking_phishing`; „Hallo, kommst du heute Abend zum Essen? … Oma“ `legit`. The answers follow the O₂ voice, but none named a domain, so nothing was marked.
+
+**What the backend still needs for the page** (to ask the backend team):
+1. **The Onlineschutz signal.** The page's main upsell („Die Seite steht auf unserer Sperrliste“) needs to know that a link is on the blocklist. The service already has ioclookup's `signal` per domain; asked: `links: [{ domain, signal }]` at the top level of the response. TI to confirm that `strong` is exactly what Onlineschutz blocks. Until then no answer shows the card, which is the safe side.
+2. **The reason contract:** name the suspicious domain and the official one in `explanation`, written as in `links` and `official_domains`, so the page can mark them red and green.
+3. **Threat types for the other three cards:** romance (Liebes‑Lügner), tech support (Support‑Spion) and the fake bank adviser or police (Schein‑Banker) have none. Ask for `romance`, `tech_support` and `bank_impersonation`, or an agreed map.
+4. **A reason field for feedback:** the page sends its code (`wrong_verdict` · `unclear` · `not_helpful`) in `comment` for now.
+5. **Shorter help:** `if_already_happened` came back with 1–3 sentences; one short sentence fits the help line.
+6. `/health/check` is listed without auth in the swagger, but the front door wants a token.
+
+- **Kept from the brief:** the reason contract (round 4): 2 short sentences, where the link really goes and the real site, then what they're after. A domain that isn't in the text just isn't marked.
 - **Dropped from the brief's demo:** the follow-up question with answer buttons, and the tip.
 - **Type names from the deck**, shown on the page since round 2: Paket‑Trickser, Konto‑Knacker, Hallo‑Mama‑Schwindler, Goldesel, Liebes‑Lügner. English: Parcel Trickster, Account Cracker, Hi‑Mum Faker, Golden Goose, Love Liar.
-- **Two types from O₂ CZ** (round 4), not in the deck: Schein‑Banker / Bogus Banker (`bank_impersonation`: poses as the bank or the police, wants your money in a „sicheres Konto“) and Support‑Spion / Support Spy (`tech_support`: fake tech support, wants remote access). CZ's seventh, „Pan Naléhavý“ (Mr Urgent: panic, then a fake link), is the Konto‑Knacker here; a message that is only urgency gets `type: null`. The backend has to learn both before it sends them.
-- **Share texts** exist only for `parcel_scam`. Write `share.subject.*` and `share.message.*` for the other six before the real backend sends them.
-- **How it decides:**
-  1. If the text contains a link: the Whalebone resolver verdict, WHOIS/RDAP (owner and age of the domain), Google SERP and quick checks.
-  2. Without a link: it reads the words for pressure, money requests, codes and passwords, and known tricks.
-  3. Both paths use Whalebone's threat-intelligence library.
-  4. An LLM writes the German answer: O₂ tone, one of the 5 types, what to do now, and help if it already happened.
-- **Feedback:** `POST /v1/feedback { request_id, rating: up · down, reason: wrong_verdict · unclear · not_helpful · null }` → `202`. The brief's ask to O₂: thumbs under every answer, each tap sent back with its ID. The page posts once on the thumb and again with the reason, under the same `request_id`.
+- **Two types from O₂ CZ** (round 4), not in the deck: Schein‑Banker / Bogus Banker (`bank_impersonation`: poses as the bank or the police, wants your money in a „sicheres Konto“) and Support‑Spion / Support Spy (`tech_support`: fake tech support, wants remote access). CZ's seventh, „Pan Naléhavý“ (Mr Urgent: panic, then a fake link), is the Konto‑Knacker here.
+- **Share texts** exist for the four types the backend can send (parcel, account, family, profit; the last three written on 2026-10-22, not reviewed yet). A type without `share.message.*` gets no share card. Romance, bank and tech support need theirs once the backend sends them.
 - **Later ideas in the brief:** screenshots and images, WhatsApp and other messengers, the "Oma Hilde" avatar, and a place inside the O₂ Security Hub (2027).
 
 ## O₂ Onlineschutz (the upsell)
@@ -358,6 +372,28 @@ The designer's verdict on the concept: go with changes (all MUSTs taken, deviati
 - Onlineschutz drops „automatisch“ / "automatically": "before it loads" already says it. „Die Seite steht auf unserer Sperrliste“ (the owner's must) and „Ohne Installation“ stay.
 - Kept as they were: the placeholder, steps, 116 116, feedback, share card and the upload popup.
 
+### Backend integration (2026-10-22)
+
+No designer review yet: the new states are stand-ins until caution and legit get their design.
+
+**Flow**
+- **The example keeps its stand-in answer** (`demo.js`), also when the backend is on: the owner wants it "on the side, for now", and only the stand-in shows the full result (Onlineschutz, marks) until the backend sends `links`. Other text goes to the backend when `VITE_API_URL` is set, otherwise it gets the demo notice as before.
+- `demo.js` answers in the backend's own shape, so the example and real messages run through the same `showResult()`.
+- **Errors use the notice card** (one icon, one line, at most one outline button), after the loader:
+  - no connection, timeout (15 s), token or server error: „Wir konnten die Nachricht gerade nicht prüfen. Tipp so lange auf keinen Link.“ / "We couldn’t check the message just now. Until then, don’t tap any links." with „Nochmal versuchen“ / "Try again". A safety tip, because the person is holding a suspicious message.
+  - a rate limit (`RATE_LIMITED` or the proxy's plain-text 429): „Gerade prüfen sehr viele. Versuch es in einer Minute noch mal.“ with the retry.
+  - the daily quota: „Du hast heute schon viele Nachrichten geprüft. Morgen geht’s weiter.“, without a button: a retry can't work today.
+  - The text gets focus, like the headline after an answer. No „Fertig.“ phase before an error.
+- **Over 4000 characters** (the backend's limit) gets the hint „Das ist zu lang. Füg nur die Nachricht selbst ein.“ before any call. No `maxlength`: it would cut a pasted e-mail without saying so.
+- **Language switch:** still fetches the answer again. With the real backend that's a new check: it counts against the daily quota, gets a new `answer_id` and could, rarely, change the verdict. If it fails, the card stays as it was, in its own language.
+- **Token:** the page sends the configured token, then the one from each `Wb-Token`. That one lasts 15 minutes, so after a 401 the page starts over once with the configured token.
+- **Feedback** posts one after the other, so the reason after „Nein“ can't land before the bare „Nein“ (the backend keeps the last rating).
+
+**Verdicts**
+- **Only `scam` gets the Trickser** and the „Durchschaut“ tag. A `caution` with a known type would overclaim: it means "we're not sure".
+- `caution` (also the fallback): an O₂ orange disk (`#FFA55A`, ink icon: white would be 1.9:1) on a `#FFF4EA` tint. `legit`: an O₂ green disk with a tick, ink on `#DDF7EA`. „So bleibst du sicher“ stays the steps' title for both, which reads oddly over „Genieße das Abendessen.“; that's for their design.
+- Nothing is red unless the backend flagged the domain (`links`), and nothing red on `legit`.
+
 ## Open items
 
 Before anyone outside the team gets the link:
@@ -367,8 +403,14 @@ Before anyone outside the team gets the link:
 - **Footer:** Impressum and Datenschutz (removed in round 2 together with its old line).
 - **Netlify:** check that the site is linked to this repo with `dev` as the production branch.
 
+To go live with the backend (diagrams, test results and the order of the steps: https://claude.ai/artifact/DaYUz7hgcne8c39s2gY9kF):
+- **A token source.** The integration secret can't be in the page, and a token baked into it could be rotated forever by anyone. Proposed for the PoC: a Netlify Function that mints a 15-minute token per visitor, with O₂'s `client_id` and a random `user_id` kept in an HttpOnly cookie, so the daily quota counts per browser. Not an IP hash: O₂ mobile customers share carrier NAT addresses, so one id would pool many people's quota. Needs the owner's OK: it's the first server-side code in this repo. If O₂ hosts the page later, O₂'s backend mints it.
+- **Netlify:** switch on the `/api` redirect in `netlify.toml` and set `VITE_API_URL=/api` in the Netlify UI. Then check that Netlify passes `Authorization` on and `Wb-Token` back, and which client IP the front door sees (its per-IP limit would otherwise count all visitors as one).
+- **Backend asks** 1–6 above, most of all `links` for Onlineschutz.
+- **Legal:** the backend stores every message with its answer, with no deletion yet. The page needs its line on what happens to pasted text before real people use it.
+
 Next iteration:
-- **Real API:** error and timeout states with copy, plus designs for the `caution` (orange) and `ok` (green) verdicts.
+- **Real API:** designs for the `caution` (orange) and `legit` (green) verdicts; the error states have stand-in copy (round "Backend integration" above).
 - **Tracking:** example vs. own text, each check, the verdict, feedback and its reason, Onlineschutz clicks, shares, and taps on the screenshot button. These answer the PoC's questions. Since round 2 also: stories watched to the end, pauses and replays; since round 4: the last card seen in the carousel and the arrow presses.
 - **Share texts** for the six types other than `parcel_scam`.
 - **Stories** for Schein‑Banker and Support‑Spion (9 s, three beats, steps `scam.*.s1–s3` and `scam.*.rule`), so their results get „So läuft der Trick“.

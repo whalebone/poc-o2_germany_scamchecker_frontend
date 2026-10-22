@@ -2,8 +2,11 @@
 import './style.css'
 import './scenes.css'
 import { STRINGS } from './strings.js'
-import { EXAMPLES, isExample, checkMessage, sendFeedback } from './demo.js'
+import * as demo from './demo.js'
+import * as api from './api.js'
 import { SCAM_TYPES, hasStory, story, portrait, RIM, spotted, CHECKING, BLOCKED } from './scenes.js'
+
+const { EXAMPLES, isExample } = demo
 
 const $ = (id) => document.getElementById(id)
 const form = $('form')
@@ -24,7 +27,8 @@ const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 let busy = false
 let checkedText = ''
-let requestId = null
+let backend = demo // where the shown answer came from: the example's stand-in (demo.js) or the real one (api.js)
+let answerId = null
 let shareText = ''
 
 // ---------- Language ----------
@@ -200,21 +204,25 @@ function keepSubmitVisible() {
 message.addEventListener('focus', keepSubmitVisible)
 window.visualViewport?.addEventListener('resize', keepSubmitVisible)
 
-// The hint is only linked to the field while it shows, or screen readers would always read it.
-function showHint(show) {
-  hint.hidden = !show
-  if (show) message.setAttribute('aria-describedby', 'hint')
-  else message.removeAttribute('aria-describedby')
+// The hint (an empty field, or a message too long for the backend) is only linked to the field
+// while it shows, or screen readers would always read it.
+function showHint(key = null) {
+  hint.hidden = !key
+  if (key) {
+    hint.dataset.i18n = key
+    hint.textContent = t(key)
+    message.setAttribute('aria-describedby', 'hint')
+  } else message.removeAttribute('aria-describedby')
 }
 
 function useExample() {
   message.value = EXAMPLES[lang] // no focus, so the keyboard stays closed
-  showHint(false)
+  showHint()
   autoGrow()
 }
 
 message.addEventListener('input', () => {
-  showHint(false)
+  showHint()
   autoGrow()
   keepSubmitVisible()
 })
@@ -235,14 +243,16 @@ form.addEventListener('submit', (event) => {
   event.preventDefault()
   if (busy) return
   const text = message.value.trim()
-  if (!text) {
-    showHint(true)
+  if (!text || text.length > api.MAX_LENGTH) {
+    showHint(text ? 'form.long' : 'form.empty')
     message.focus()
     return
   }
   message.blur()
-  if (isExample(text)) check(text)
-  else showNotice()
+  // The example keeps its stand-in answer; other text goes to the real backend once it is set up.
+  if (isExample(text)) check(text, demo)
+  else if (api.live) check(text, api)
+  else showNotice('notice.text', 'example')
 })
 
 // Show progress, result or notice in the slot; no view hides the slot.
@@ -266,9 +276,10 @@ function setBusy(on) {
   for (const button of langButtons) button.setAttribute('aria-disabled', on) // aria- keeps focus on the switch
 }
 
-async function check(text) {
+async function check(text, from) {
   setBusy(true)
   checkedText = text
+  backend = from
   submit.disabled = true
   $('submit-label').textContent = t('form.busy')
   $('status').textContent = t('form.busy')
@@ -276,10 +287,13 @@ async function check(text) {
   showInSlot(progress)
   bringIntoView()
 
-  const answer = await showChecking(/https?:\/\/|www\./i.test(text), checkMessage(text, lang))
+  const answer = await showChecking(/https?:\/\/|www\./i.test(text), backend.checkMessage(text, lang).catch((error) => error))
 
-  showResult(answer)
-  $('headline').focus({ preventScroll: true })
+  if (answer instanceof Error) showError(answer)
+  else {
+    showResult(answer)
+    $('headline').focus({ preventScroll: true })
+  }
   $('status').textContent = ''
   $('submit-label').textContent = t('form.submit')
   submit.disabled = false
@@ -296,6 +310,7 @@ async function showChecking(hasLink, pending) {
   await wait(1800)
   setPhase('think')
   const answer = await pending
+  if (answer instanceof Error) return answer // no „Fertig.“ before an error
   setPhase('done')
   await wait(700)
   return answer
@@ -312,46 +327,56 @@ function setPhase(phase) {
 
 // The backend answers in one language: after a switch, fetch the visible answer again
 // and swap the whole card at once.
+// If that fails, the card stays as it is, in its own language.
 async function refreshResult() {
   setBusy(true)
   result.setAttribute('aria-busy', 'true')
-  const answer = await checkMessage(checkedText, lang)
-  result.removeAttribute('lang')
-  applyLanguage()
-  showResult(answer)
+  try {
+    const answer = await backend.checkMessage(checkedText, lang)
+    result.removeAttribute('lang')
+    applyLanguage()
+    showResult(answer)
+  } catch (error) {
+    console.warn('The answer was not fetched again:', error.message)
+  }
   result.removeAttribute('aria-busy')
   setBusy(false)
 }
 
-function showResult(answer) {
-  requestId = answer.request_id
-  const type = SCAM_TYPES.includes(answer.type) ? answer.type : null // a known, common scam
-  $('verdict').dataset.verdict = answer.verdict
-
-  // A scam shows the Trickser, spotted by the Lupe, in his costume when the type is known; other verdicts keep the icon.
-  const art = $('verdict-art')
+// The backend's response (api.js; demo.js has the example's): answer_id, answer, fallback and links.
+function showResult({ answer_id, answer, links = [] }) {
+  answerId = answer_id
   const scam = answer.verdict === 'scam'
+  // A known, common scam gets the Trickser in his costume. Only for a scam: "Durchschaut" would overclaim on a caution.
+  const type = scam ? api.scamType(answer.threat_type) : null
+  $('verdict').dataset.verdict = answer.verdict // scam · caution · legit; a fallback is a caution
+
+  // A scam shows the Trickser, spotted by the Lupe; the other verdicts an icon.
+  const art = $('verdict-art')
   art.hidden = !scam
   $('verdict-icon').hidden = scam
+  $('verdict-icon').firstElementChild.className = `icon ${answer.verdict === 'legit' ? 'i-tick' : 'i-warning'}`
   if (scam) art.innerHTML = spotted(type)
   $('spotted').hidden = !type
   if (type) $('spotted').textContent = named('result.spotted', type)
 
-  $('headline').replaceChildren(...sentences(answer.headline))
-  // The reason names the scam domain and the real site it imitates: marked red and green, as plain text,
-  // so people type the real address themselves.
-  const { domain, imitates } = answer.link ?? {}
-  const mark = (part) => Object.assign(document.createElement('mark'), { className: part === domain ? 'fake' : 'real' })
-  $('reason').replaceChildren(...wrap(answer.reason, [domain, imitates], mark))
+  $('headline').replaceChildren(...sentences(answer.summary))
+  // The explanation names the scam domain and the real site: marked red and green, as plain text,
+  // so people type the real address themselves. A domain the backend didn't flag isn't red.
+  const real = answer.official_domains
+  const fake = answer.verdict === 'legit' ? [] : links.map((link) => link.domain).filter((domain) => !real.includes(domain))
+  const mark = (part) => Object.assign(document.createElement('mark'), { className: fake.includes(part) ? 'fake' : 'real' })
+  $('reason').replaceChildren(...wrap(answer.explanation, [...fake, ...real], mark))
 
-  $('steps').replaceChildren(...answer.next_steps.map((step) => Object.assign(document.createElement('li'), { textContent: step })))
+  $('steps').replaceChildren(...answer.what_to_do.map((step) => Object.assign(document.createElement('li'), { textContent: step })))
 
   const help = $('help')
-  help.hidden = !answer.if_it_happened
-  if (answer.if_it_happened) {
+  const happened = answer.if_already_happened.join(' ')
+  help.hidden = !happened
+  if (happened) {
     // 116 116 is the German hotline for blocking bank cards: make it tappable.
     const call = () => Object.assign(document.createElement('a'), { href: 'tel:116116', ariaLabel: t('result.call') })
-    help.replaceChildren(...wrap(answer.if_it_happened, ['116 116'], call))
+    help.replaceChildren(...wrap(happened, ['116 116'], call))
   }
 
   setFeedback('ask')
@@ -363,9 +388,11 @@ function showResult(answer) {
     watch($('trick-story'))
   }
 
-  $('protect').hidden = answer.link?.status !== 'malicious' // known in our domain database
-  $('share').hidden = !type // a known, common scam is worth warning others about
-  if (type) prepareShare(type)
+  $('protect').hidden = !links.some((link) => link.signal === 'strong') // on the blocklist Onlineschutz uses
+  // A known, common scam is worth warning others about, once it has a warning text.
+  const shareable = type && `share.message.${type}` in STRINGS[lang]
+  $('share').hidden = !shareable
+  if (shareable) prepareShare(type)
 
   showInSlot(result)
 }
@@ -395,9 +422,23 @@ function wrap(text, parts, make) {
   return nodes
 }
 
-function showNotice() {
+// The notice card: the demo's limit, or a check that failed. At most one way on: the example or try again.
+function showNotice(key, action = null) {
+  const text = $('notice-text')
+  text.dataset.i18n = key
+  text.textContent = t(key)
+  $('notice-example').hidden = action !== 'example'
+  $('notice-retry').hidden = action !== 'retry'
   showInSlot(notice)
   notice.scrollIntoView({ behavior: scrollBehavior(), block: 'nearest' })
+}
+
+// A used-up daily quota can't be retried today; anything else can.
+function showError(error) {
+  console.warn('The check failed:', error.kind, error.message)
+  const kind = error.kind ?? 'failed'
+  showNotice(`error.${kind}`, kind === 'quota' ? null : 'retry')
+  $('notice-text').focus({ preventScroll: true })
 }
 
 $('notice-example').addEventListener('click', () => {
@@ -405,6 +446,8 @@ $('notice-example').addEventListener('click', () => {
   showInSlot()
   form.scrollIntoView({ behavior: scrollBehavior(), block: 'nearest' })
 })
+
+$('notice-retry').addEventListener('click', () => form.requestSubmit())
 
 $('reset').addEventListener('click', () => {
   showInSlot()
@@ -414,7 +457,9 @@ $('reset').addEventListener('click', () => {
   message.focus({ preventScroll: true })
 })
 
-// ---------- Feedback: POST /v1/feedback with the answer's request_id ----------
+// ---------- Feedback: POST /v1/feedback with the answer's id ----------
+// The backend keeps one rating per answer, so the reason after a "Nein" replaces the first post.
+// It has no field for the reason yet: the page's code (wrong_verdict · unclear · not_helpful) goes into comment.
 
 function setFeedback(step) {
   for (const el of feedback.querySelectorAll('[data-step]')) el.hidden = el.dataset.step !== step
@@ -423,10 +468,10 @@ function setFeedback(step) {
 feedback.addEventListener('click', (event) => {
   const { rating, reason } = event.target.closest('button')?.dataset ?? {}
   if (rating) {
-    sendFeedback({ request_id: requestId, rating, reason: null })
+    backend.sendFeedback({ answer_id: answerId, rating })
     setFeedback(rating === 'up' ? 'thanks' : 'why')
   } else if (reason) {
-    sendFeedback({ request_id: requestId, rating: 'down', reason }) // updates the same record
+    backend.sendFeedback({ answer_id: answerId, rating: 'down', comment: reason })
     setFeedback('thanks')
   }
 })

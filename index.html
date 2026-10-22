@@ -62,6 +62,7 @@
           <p class="checking-text" id="progress-text" aria-hidden="true"></p>
         </div>
 
+        <!-- The backend's answer: data-verdict on the card is scam, caution or legit. -->
         <div class="result" id="result" hidden>
           <article class="card verdict" id="verdict">
             <div class="verdict-head">
@@ -128,10 +129,12 @@
           <button type="button" class="btn btn-tertiary" id="reset" data-i18n="reset"></button>
         </div>
 
+        <!-- The demo's limit, or a check that failed (main.js sets the text and the button). -->
         <div class="card notice" id="notice" hidden>
           <span class="icon i-info" aria-hidden="true"></span>
-          <p data-i18n="notice.text"></p>
+          <p id="notice-text" tabindex="-1" data-i18n="notice.text"></p>
           <button type="button" class="btn btn-secondary" id="notice-example" data-i18n="form.example"></button>
+          <button type="button" class="btn btn-secondary" id="notice-retry" data-i18n="notice.retry" hidden></button>
         </div>
       </section>
 

@@ -14,9 +14,10 @@ const errors = []
 
 async function open(viewport, { mobile = true, locale = 'de-DE' } = {}) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 2, isMobile: mobile, hasTouch: mobile, locale })
+  await ctx.route('**/v1/**', (route) => route.abort()) // never the real backend: a live dev server shows its error notice
   const page = await ctx.newPage()
   page.on('pageerror', (e) => errors.push(String(e)))
-  page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+  page.on('console', (m) => m.type() === 'error' && !m.location().url.includes('/v1/') && errors.push(m.text())) // not the blocked call
   await page.goto(base, { waitUntil: 'networkidle' })
   await page.evaluate(() => document.fonts.ready)
   return page
@@ -76,9 +77,9 @@ await wait(900)
 await shot(m, 'm16-after-reset')
 await m.fill('#message', 'Hallo, kommst du heute Abend zum Essen? Liebe Grüße')
 await m.click('#submit')
-await m.waitForSelector('#notice:not([hidden])', { timeout: 10000 })
+await m.waitForSelector('#notice:not([hidden])', { timeout: 15000 })
 await wait(900)
-await shot(m, 'm17-demo-notice')
+await shot(m, 'm17-notice') // the demo's notice, or with .env.development.local the error notice
 
 // Small phones
 const se = await open({ width: 375, height: 667 })

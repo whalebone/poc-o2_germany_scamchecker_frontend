@@ -1,11 +1,17 @@
 // Behaviour checks for the page. Needs the dev server: npm run check [-- http://localhost:5180/]
 // Texts come from src/strings.js and src/demo.js, so copy edits don't break the checks.
+// The real backend's part starts a second dev server (port 5181) with VITE_API_URL set and answers
+// its calls in the browser, in the shapes of the backend's api/swagger.yml.
 import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright-core'
+import { createServer, loadEnv } from 'vite'
 import { STRINGS } from '../src/strings.js'
 import { EXAMPLES } from '../src/demo.js'
 
 const base = process.argv[2] || 'http://localhost:5180/'
+const root = fileURLToPath(new URL('..', import.meta.url))
+const liveDev = Boolean(loadEnv('development', root).VITE_API_URL) // .env.development.local sends other text to the backend
 const DE = STRINGS.de
 const EN = STRINGS.en
 const DOMAIN = EXAMPLES.de.match(/https?:\/\/([^/\s]+)/)[1]
@@ -31,8 +37,9 @@ check('no exclamation marks in any text (O₂ voice)', !loud.length, loud.join('
 
 const browser = await chromium.launch({ channel: 'chrome' }) // the installed Google Chrome
 
-async function open(path = '', { locale = 'de-DE', saved = null, viewport = { width: 390, height: 844 }, mobile = true, reducedMotion = 'no-preference' } = {}) {
+async function open(path = '', { site = base, locale = 'de-DE', saved = null, viewport = { width: 390, height: 844 }, mobile = true, reducedMotion = 'no-preference' } = {}) {
   const ctx = await browser.newContext({ viewport, isMobile: mobile, hasTouch: mobile, locale, reducedMotion })
+  await ctx.route('**/v1/**', (route) => route.abort()) // never the real backend: no quota spent, no network needed
   if (saved) await ctx.addInitScript((lang) => localStorage.setItem('lang', lang), saved)
   const page = await ctx.newPage()
   page.logs = []
@@ -40,7 +47,7 @@ async function open(path = '', { locale = 'de-DE', saved = null, viewport = { wi
   page.on('console', (m) => page.logs.push(m.text()))
   page.on('pageerror', (e) => page.logs.push(`PAGEERROR ${e}`))
   page.on('request', (r) => page.requests.push(r.url()))
-  await page.goto(base + path, { waitUntil: 'networkidle' })
+  await page.goto(site + path, { waitUntil: 'networkidle' })
   return page
 }
 const visible = (p, selector) => p.locator(selector).isVisible()
@@ -82,6 +89,9 @@ check('the hint is linked to the field while it shows', (await p.getAttribute('#
 check('an empty check focuses the field', (await focusedId(p)) === 'message')
 await p.fill('#message', 'x')
 check('typing hides and unlinks the hint', !(await visible(p, '#hint')) && (await p.getAttribute('#message', 'aria-describedby')) === null)
+await p.fill('#message', 'x'.repeat(4001))
+await p.click('#submit')
+check('a message over 4000 characters (the backend limit) gets its own hint', (await visible(p, '#hint')) && (await p.textContent('#hint')) === DE['form.long'] && !(await visible(p, '#slot')))
 
 // The scam types on the landing page: a row of cards that scrolls sideways
 p = await open('', { viewport: { width: 360, height: 780 } })
@@ -163,9 +173,9 @@ check('the button is back to normal after the check', (await p.textContent('#sub
 await p.click('[data-rating="down"]')
 await p.click('[data-reason="wrong_verdict"]')
 const posts = p.logs.filter((l) => l.startsWith('POST /v1/feedback'))
-const ids = posts.map((l) => l.match(/sc_\w+/)?.[0])
-check('feedback posts twice with the same request_id', posts.length === 2 && ids[0] && ids[0] === ids[1], posts.join(' | '))
-check('the second post carries the reason', posts[1]?.includes('wrong_verdict'))
+const ids = posts.map((l) => l.match(/sc_[\w-]+/)?.[0])
+check('feedback posts twice with the same answer_id', posts.length === 2 && ids[0] && ids[0] === ids[1], posts.join(' | '))
+check('the second post carries the reason as its comment', /comment: '?wrong_verdict/.test(posts[1]), posts[1])
 check('feedback says thanks', await visible(p, '[data-step="thanks"]'))
 
 // Language switch while a result shows: the whole card swaps at once
@@ -191,12 +201,15 @@ await p.click('[data-lang="de"]')
 await p.waitForTimeout(5500)
 check('after reset, a language switch does not bring the result back', !(await visible(p, '#slot')))
 
-// Demo notice
-await p.fill('#message', 'Hallo, kommst du heute Abend zum Essen?')
-await p.click('#submit')
-check('other text shows the demo notice at once', await visible(p, '#notice'))
-await p.click('#notice-example')
-check('the notice button fills the example and hides the notice', (await p.inputValue('#message')) === EXAMPLES.de && !(await visible(p, '#slot')))
+// Demo notice (with .env.development.local the dev server sends other text to the backend: the live part below covers that)
+if (liveDev) console.log('SKIP  the demo notice: the dev server is live (.env.development.local)')
+else {
+  await p.fill('#message', 'Hallo, kommst du heute Abend zum Essen?')
+  await p.click('#submit')
+  check('other text shows the demo notice at once', await visible(p, '#notice'))
+  await p.click('#notice-example')
+  check('the notice button fills the example and hides the notice', (await p.inputValue('#message')) === EXAMPLES.de && !(await visible(p, '#slot')))
+}
 
 // Screenshot popup
 await p.click('#upload')
@@ -254,6 +267,117 @@ check('the WhatsApp text is a warning plus the page URL', warnings.some((w) => s
 check('the shared URL has no ?lang', !shared.includes('lang='))
 check('the shared text never contains the scam domain', !shared.includes(DOMAIN))
 pageErrors.push(...d.logs.filter((l) => l.startsWith('PAGEERROR')))
+
+// ---------- The real backend (api.js), answered in the browser: nothing reaches dev1 ----------
+
+process.env.VITE_API_URL = '/api' // beats .env.development.local
+process.env.VITE_API_TOKEN = 'token-1'
+const server = await createServer({ root, server: { port: 5181 }, logLevel: 'silent' })
+await server.listen()
+const L = await open('', { site: 'http://localhost:5181/' })
+const calls = []
+const replies = []
+await L.route('**/v1/**', async (route) => {
+  const req = route.request()
+  calls.push({ path: new URL(req.url()).pathname, body: req.postDataJSON(), auth: req.headers().authorization })
+  const reply = replies.shift()
+  if (reply) await route.fulfill(reply)
+  else await route.abort() // no connection, or blocked by CORS
+})
+const last = () => calls.at(-1) ?? {}
+const answerOf = (fields) => ({
+  verdict: 'scam',
+  threat_type: 'credential_phishing',
+  impersonated_entity: 'DHL',
+  summary: 'Das ist nicht DHL.',
+  explanation: 'Der Link führt zu dhl-hilfe.info, nicht zur echten dhl.de.',
+  official_domains: ['dhl.de'],
+  what_to_do: ['Tipp nicht auf den Link.', 'Lösch die Nachricht.', 'Gib nichts ein.'],
+  if_already_happened: ['Schon eingeloggt? Ändere dein Passwort.', 'Karte sperren: 116 116'],
+  language: 'de',
+  ...fields,
+})
+const json = (status, body, token) => ({ status, contentType: 'application/json', headers: token ? { 'Wb-Token': token } : {}, body: JSON.stringify(body) })
+const ok = (answer, more = {}) => json(200, { answer_id: 'sc_live', answer, fallback: false, timing: { total_ms: 2400 }, versions: { prompt: 'verdict-v1' }, ...more }, 'token-2')
+const stored = (token) => json(200, { status: 'success', message: 'feedback stored' }, token)
+const error = (status, code) => json(status, { status: 'error', error_code: code, errors: [code] })
+const plain = (status, text) => ({ status, contentType: 'text/plain', body: text })
+const answered = () => L.waitForSelector('#result:not([hidden]), #notice:not([hidden])', { timeout: 15000 })
+async function ask(text, ...answers) {
+  replies.push(...answers)
+  if (text) await L.fill('#message', text)
+  await L.click('#submit')
+  await answered()
+}
+async function retry(...answers) {
+  replies.push(...answers)
+  await L.click('#notice-retry')
+  await answered()
+}
+const PHISH = 'Ihr DHL-Konto wird gesperrt: https://dhl-hilfe.info/login'
+
+await L.click('#example')
+await L.click('#submit')
+await L.waitForSelector('#result:not([hidden])', { timeout: 15000 })
+check('live: the example keeps its stand-in answer, without a call', !calls.length && (await visible(L, '#protect')))
+await L.click('#reset')
+
+await ask(PHISH, ok(answerOf(), { links: [{ domain: 'dhl-hilfe.info', signal: 'strong' }] }))
+check('live: other text goes to POST /v1/scam-check with message and language', last().path === '/api/v1/scam-check' && last().body?.message === PHISH && last().body?.language === 'de', JSON.stringify(last()))
+check('live: the token goes raw into Authorization', last().auth === 'token-1')
+check('live: summary is the headline, explanation the reason', (await L.textContent('#headline')) === 'Das ist nicht DHL.' && (await L.textContent('#reason')).startsWith('Der Link führt'))
+check('live: a known threat type gets its Trickser and story', (await L.textContent('#spotted')) === DE['result.spotted'].replace('{name}', DE['scam.account_phishing.name']) && (await visible(L, '#trick .sc-account_phishing')))
+check('live: the flagged domain is red, the official one green', (await L.textContent('#reason mark.fake')) === 'dhl-hilfe.info' && (await L.textContent('#reason mark.real')) === 'dhl.de')
+check('live: what_to_do are the steps, if_already_happened the help line', (await L.locator('#steps li').count()) === 3 && (await L.textContent('#help')).includes('Passwort. Karte sperren') && (await L.getAttribute('#help a', 'href')) === 'tel:116116')
+check('live: a strong threat-intelligence signal shows Onlineschutz', await visible(L, '#protect'))
+check('live: the share card warns with the type’s own text', (await visible(L, '#share')) && decodeURIComponent(await L.getAttribute('#share-whatsapp', 'href')).includes(DE['share.message.account_phishing']))
+
+replies.push(stored('token-3'), stored('token-4'))
+await L.click('[data-rating="down"]')
+await L.click('[data-reason="unclear"]')
+await L.waitForTimeout(500)
+const [rated, why] = calls.slice(-2)
+check('live: feedback posts the rating, then the reason as its comment, in that order', rated?.path === '/api/v1/feedback' && rated.body.answer_id === 'sc_live' && rated.body.rating === 'down' && !('comment' in rated.body) && why?.body.comment === 'unclear', JSON.stringify(calls.slice(-2)))
+check('live: each call carries the token from the last Wb-Token', rated?.auth === 'token-2' && why?.auth === 'token-3')
+
+await L.click('#reset')
+await ask(PHISH, ok(answerOf({ verdict: 'caution', threat_type: 'parcel_delivery', official_domains: [] }), { fallback: true }))
+check('live: a caution (also the fallback) gets the warning icon, no Trickser, no Onlineschutz, story or share', (await L.getAttribute('#verdict', 'data-verdict')) === 'caution' && (await visible(L, '#verdict-icon .i-warning')) && !(await visible(L, '#verdict-art')) && !(await visible(L, '#spotted')) && !(await visible(L, '#protect')) && !(await visible(L, '#trick')) && !(await visible(L, '#share')))
+
+await L.click('#reset')
+await ask('Dein Paket kommt heute: https://www.dhl.de/sendung', ok(answerOf({ verdict: 'legit', threat_type: 'none', explanation: 'Der Link führt zur echten dhl.de.', what_to_do: ['Alles in Ordnung.'], if_already_happened: [] }), { links: [{ domain: 'www.dhl.de', signal: 'trusted' }] }))
+check('live: legit gets the tick, no help line, nothing red', (await L.getAttribute('#verdict', 'data-verdict')) === 'legit' && (await visible(L, '#verdict-icon .i-tick')) && !(await visible(L, '#help')) && !(await L.locator('#reason mark.fake').count()) && (await L.textContent('#reason mark.real')) === 'dhl.de')
+
+await L.click('#reset')
+await ask(PHISH, ok(answerOf()))
+check('live: without links (today’s backend) no Onlineschutz and no red mark', !(await visible(L, '#protect')) && !(await L.locator('#reason mark.fake').count()) && (await L.textContent('#reason mark.real')) === 'dhl.de')
+
+await L.click('#reset')
+await ask(PHISH, error(429, 'QUOTA_EXCEEDED'))
+check('live: a used-up daily quota says so, without a retry', (await L.textContent('#notice-text')) === DE['error.quota'] && !(await visible(L, '#notice-retry')) && !(await visible(L, '#notice-example')))
+check('live: the error text gets focus, the button is back to normal', (await focusedId(L)) === 'notice-text' && (await L.textContent('#submit-label')) === DE['form.submit'] && !(await L.isDisabled('#submit')))
+await ask(null, plain(429, 'Limit exceeded'))
+check('live: the front door’s plain-text 429 means busy, with a retry', (await L.textContent('#notice-text')) === DE['error.busy'] && (await visible(L, '#notice-retry')))
+await retry(error(500, 'GENERIC_ERROR'))
+check('live: a server error asks to try again', (await L.textContent('#notice-text')) === DE['error.failed'] && (await visible(L, '#notice-retry')))
+await retry()
+check('live: no connection (or CORS) asks to try again', (await L.textContent('#notice-text')) === DE['error.failed'])
+await retry(ok(answerOf()))
+check('live: "Nochmal versuchen" checks the message again', (await visible(L, '#result')) && last().body?.message === PHISH)
+await L.click('#reset')
+await ask(PHISH, plain(401, 'Token is expired'), ok(answerOf()))
+check('live: an expired refreshed token starts over once with the configured one', calls.at(-2)?.auth === 'token-2' && last().auth === 'token-1' && (await visible(L, '#result')))
+
+replies.push(ok(answerOf({ summary: 'This isn’t DHL.', language: 'en' })))
+await L.click('[data-lang="en"]')
+await L.waitForSelector('#result:not([lang])', { timeout: 15000 })
+check('live: a language switch asks the backend again, in English', last().body?.language === 'en' && (await L.textContent('#headline')) === 'This isn’t DHL.')
+replies.push(error(500, 'GENERIC_ERROR'))
+await L.click('[data-lang="de"]')
+await L.waitForFunction(() => document.querySelector('[data-lang="de"]').getAttribute('aria-disabled') === 'false')
+check('live: if that fails, the card stays as it was', (await visible(L, '#result')) && (await L.textContent('#headline')) === 'This isn’t DHL.')
+pageErrors.push(...L.logs.filter((l) => l.startsWith('PAGEERROR')))
+await server.close()
 
 check('no page errors', !pageErrors.length, pageErrors.join(' | '))
 await browser.close()
