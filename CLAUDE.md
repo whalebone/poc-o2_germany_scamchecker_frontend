@@ -1,8 +1,8 @@
 # CLAUDE.md
 
-Frontend-only PoC for the O₂ Germany Scam Checker: a static site built with Vite (plain HTML, CSS and JavaScript) and hosted on Netlify. The backend is a separate project (`whalebone/scam-check`) — nothing server-side lives in this repo.
+Frontend-only PoC for the O₂ Germany Scam Checker: a static site built with Vite (plain HTML, CSS and JavaScript) and hosted on Netlify. The backend is a separate project (`whalebone/scam-check`). The only server-side code here is `netlify/functions/api.mjs`, which passes `/api` on to it and adds the token.
 
-Status: one example flow (a fake customs/parcel SMS) with a stand-in answer, in German and English, and the real backend connected for any other text when `VITE_API_URL` is set (locally via `.env.development.local`; not on Netlify yet: it needs a token source). The landing page shows seven common scam types (taken from O₂ CZ) as a row of cards that scrolls sideways; the result explains the detected type with an animated story. Separate layouts for phones (one column) and desktop (from 1024 px: a wide composer, then full-width split cards).
+Status: one example flow (a fake customs/parcel SMS) with a stand-in answer, in German and English, and the real backend connected for any other text when `VITE_API_URL` is set (locally via `.env.development.local`, on Netlify via its environment variables and the function). The landing page shows seven common scam types (taken from O₂ CZ) as a row of cards that scrolls sideways; the result explains the detected type with an animated story. Separate layouts for phones (one column) and desktop (from 1024 px: a wide composer, then full-width split cards).
 
 **Before any UI or UX work, read `docs/product.md`.** It holds:
 - the product goal and the owner's requirements
@@ -26,7 +26,7 @@ Don't redo that research. Update the file when a decision changes.
 - `npm run dev` — dev server with live reload at http://localhost:5180
 - `npm run build` — production build into `dist/` (what Netlify runs)
 - `npm run preview` — serve the built `dist/` locally
-- `npm run check` — behaviour checks against the running dev server (language, scam carousel, check flow, result, feedback, share, keyboard, contrast), then the real backend's part: it starts a second dev server on port 5181 with `VITE_API_URL` set and answers its calls in the browser (verdicts, token, errors). Checks never reach the real backend.
+- `npm run check` — first the Netlify function against a stand-in backend, then behaviour checks against the running dev server (language, scam carousel, check flow, result, feedback, share, keyboard, contrast), then the real backend's part: it starts a second dev server on port 5181 with `VITE_API_URL` set and answers its calls in the browser (verdicts, token, errors). Checks never reach the real backend.
 - `npm run shots` — screenshots of every state into `shots/` (git-ignored): phone 390 px German, small phones, English at 360 px, desktop 1440 and 1024 px
 - `npm run og` — re-render `public/og.jpg` (link preview) after changing the hero title or logo
 
@@ -54,7 +54,8 @@ On Windows, `runapp.bat` starts the dev server in the background and opens the b
 - `src/style.css` — styles, mobile first
 - `public/` — static files served as-is from the site root: On Air fonts, O₂ icons and logo, the hero bubble, `og.jpg` (link preview)
 - `vite.config.js` — dev server port 5180 (also set in both `.bat` files); proxies `/api` to `API_PROXY`; fills in `__SITE_URL__` for the link preview
-- `netlify.toml` — Netlify build settings, and the `/api` redirect to the backend (commented out until there's a token source)
+- `netlify.toml` — Netlify build settings
+- `netlify/functions/api.mjs` — on Netlify, `/api/v1/scam-check` and `/api/v1/feedback` go through it to the backend; it adds `SCAM_CHECK_TOKEN` and keeps the rotated token to itself
 - `docs/product.md` — product context, the backend and its gaps, UX decisions, open items
 - `scripts/` — `check.mjs`, `shots.mjs`, `og.mjs` (see Commands)
 - `.claude/skills/o2-design/` — O₂ brand design skill
@@ -72,7 +73,8 @@ On Windows, `runapp.bat` starts the dev server in the background and opens the b
 
 - **Locally:** copy `.env.example` to `.env.development.local`, put in a token, and the running dev server restarts on its own. Then the example still gets its stand-in answer, and any other text goes to dev1 through the dev server's `/api` proxy. Each real check counts against that token's 20 per day.
 - **The page reads the backend's shape directly** (`showResult()` in `main.js`): `answer_id`; `answer.verdict` (`scam` · `caution` · `legit`) sets `data-verdict`; `answer.threat_type` maps to one of the seven `SCAM_TYPES` via `scamType()` in `api.js`, only for `scam`; `summary` is the headline, `explanation` the reason, `what_to_do` the steps, `if_already_happened` the help line; `official_domains` are marked green. `links: [{ domain, signal }]` isn't in the backend yet: `signal === 'strong'` shows Onlineschutz and the domains are marked red. `demo.js` sends it for the example.
-- **Token:** the integration JWT goes raw into `Authorization`; each response's `Wb-Token` replaces it (valid 15 minutes), and a 401 starts over once with the configured one.
+- **On Netlify:** the environment variables `VITE_API_URL=/api` (makes the build live), `SCAM_CHECK_URL` (the front door) and `SCAM_CHECK_TOKEN` (secret). The page sends no token there; the function adds it. With one shared test token, all visitors share its user's 20 checks a day and are stored under that user.
+- **Token (local):** the integration JWT goes raw into `Authorization`; each response's `Wb-Token` replaces it (valid 15 minutes), and a 401 starts over once with the configured one.
 - The page keeps the loader on screen for at least 3.5 s.
 
 ## Design: o2-design skill
@@ -91,7 +93,7 @@ Netlify's production branch is `dev` (set in the Netlify UI), so every push to `
 ## Gotchas
 
 - `.bat` files must keep CRLF line endings (enforced by `.gitattributes`).
-- Never set `VITE_API_TOKEN` on Netlify, and never commit `.env.development.local`: Vite builds `VITE_*` values into the public JavaScript (that file only reaches the dev server).
+- Never set `VITE_API_TOKEN` on Netlify (the token goes in `SCAM_CHECK_TOKEN`), and never commit `.env.development.local`: Vite builds `VITE_*` values into the public JavaScript (that file only reaches the dev server).
 - The backend's front door answers every request without a token with a 401, also the CORS preflight. Call it through `/api` on the page's own origin, never cross-origin.
 - With `.env.development.local` in place the dev server is live: `npm run check` then skips the demo-notice check, and `npm run shots` shows the error notice as `m17`.
 - To change the port, update `vite.config.js`, `runapp.bat` and `shutdown.bat` together.

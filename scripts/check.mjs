@@ -3,6 +3,7 @@
 // The real backend's part starts a second dev server (port 5181) with VITE_API_URL set and answers
 // its calls in the browser, in the shapes of the backend's api/swagger.yml.
 import { readFileSync } from 'node:fs'
+import { createServer as createHttpServer } from 'node:http'
 import { fileURLToPath } from 'node:url'
 import { chromium } from 'playwright-core'
 import { createServer, loadEnv } from 'vite'
@@ -32,6 +33,38 @@ const unknown = [...html.matchAll(/data-i18n(?:-html|-placeholder|-label)?="([^"
 check('every key in index.html exists', !unknown.length, unknown.join(', '))
 const loud = [...Object.entries(DE), ...Object.entries(EN)].filter(([, v]) => v.includes('!')).map(([k]) => k)
 check('no exclamation marks in any text (O₂ voice)', !loud.length, loud.join(', '))
+
+// ---------- The Netlify function (netlify/functions/api.mjs), against a stand-in backend ----------
+
+const seen = []
+const backend = createHttpServer((req, res) => {
+  let body = ''
+  req.on('data', (chunk) => (body += chunk))
+  req.on('end', () => {
+    seen.push({ path: req.url, auth: req.headers.authorization, ip: req.headers['x-forwarded-for'], body })
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Wb-Token': 'rotated' }).end('{"answer_id":"sc_1"}')
+  })
+})
+await new Promise((resolve) => backend.listen(0, resolve))
+process.env.SCAM_CHECK_URL = `http://localhost:${backend.address().port}`
+process.env.SCAM_CHECK_TOKEN = 'secret-token'
+const { default: proxy } = await import('../netlify/functions/api.mjs')
+const call = (path, method = 'POST') => proxy(new Request(`https://site.example${path}`, { method, body: method === 'POST' ? '{"message":"x"}' : undefined }), { ip: '203.0.113.7' })
+let reply = await call('/api/v1/scam-check')
+check('function: passes /api/v1/scam-check on with the token, raw', reply.status === 200 && seen[0]?.path === '/v1/scam-check' && seen[0].auth === 'secret-token' && seen[0].body === '{"message":"x"}', JSON.stringify(seen[0]))
+check('function: sends the visitor’s IP along', seen[0]?.ip === '203.0.113.7')
+check('function: keeps the rotated token to itself', reply.headers.get('wb-token') === null && (await reply.text()) === '{"answer_id":"sc_1"}')
+reply = await call('/api/v1/feedback')
+check('function: passes /api/v1/feedback on', reply.status === 200 && seen[1]?.path === '/v1/feedback')
+const refused = [await call('/api/health/check', 'GET'), await call('/api/v2/anything')]
+check('function: refuses any other path or method, without calling the backend', refused.every((r) => r.status === 404) && seen.length === 2)
+backend.close()
+process.env.SCAM_CHECK_URL = 'http://localhost:9' // nothing listens there
+reply = await call('/api/v1/scam-check')
+check('function: an unreachable backend is a 502', reply.status === 502)
+delete process.env.SCAM_CHECK_TOKEN
+reply = await call('/api/v1/scam-check')
+check('function: without its variables it says so (503)', reply.status === 503)
 
 // ---------- Page ----------
 
