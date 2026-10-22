@@ -1,6 +1,6 @@
 // Screenshots of every page state, for design reviews. Needs the dev server.
 // npm run shots [-- <outDir> <baseUrl>]  →  shots/ (git-ignored), 2x pixel density
-// Names: m = phone 390×844 German, s = small phones (375×667, 360×780), e = English 360, d = desktop 1440 and 1024.
+// Names: m = phone 390×844 German, s = small phones (375×667, 360×780), e = English 360, t = tablet 768, d = desktop 1440 and 1024.
 import { mkdirSync, readdirSync, rmSync } from 'node:fs'
 import { chromium } from 'playwright-core'
 
@@ -94,6 +94,11 @@ await resultShown(small)
 await shot(small, 's02-360-result-viewport')
 await shot(small, 's03-360-result-full', true)
 
+// Tablet: whole cards inside the column
+const tablet = await open({ width: 768, height: 1024 })
+await tablet.locator('.tiles-nav').scrollIntoViewIfNeeded()
+await shot(tablet, 't01-768-types')
+
 // English (from the browser language), 360 px
 const en = await open({ width: 360, height: 780 }, { locale: 'en-GB' })
 await shot(en, 'e01-start')
@@ -109,6 +114,9 @@ await shot(d, 'd01-start')
 await d.locator('.tiles-nav').scrollIntoViewIfNeeded()
 await wait(300)
 await shot(d, 'd02-types')
+await d.click('#tiles-next')
+await wait(800)
+await shot(d, 'd10-types-next')
 await d.evaluate(() => window.scrollTo(0, 0))
 await d.click('#example')
 await d.click('#submit')

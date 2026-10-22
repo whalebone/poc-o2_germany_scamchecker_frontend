@@ -27,7 +27,7 @@ Don't redo that research. Update the file when a decision changes.
 - `npm run build` — production build into `dist/` (what Netlify runs)
 - `npm run preview` — serve the built `dist/` locally
 - `npm run check` — first the Netlify function against a stand-in backend, then behaviour checks against the running dev server (language, scam carousel, check flow, result, feedback, share, keyboard, contrast), then the real backend's part: it starts a second dev server on port 5181 with `VITE_API_URL` set and answers its calls in the browser (verdicts, token, errors). Checks never reach the real backend.
-- `npm run shots` — screenshots of every state into `shots/` (git-ignored): phone 390 px German, small phones, English at 360 px, desktop 1440 and 1024 px
+- `npm run shots` — screenshots of every state into `shots/` (git-ignored): phone 390 px German, small phones, English at 360 px, the scam cards on a 768 px tablet, desktop 1440 and 1024 px
 - `npm run og` — re-render `public/og.jpg` (link preview) after changing the hero title or logo
 
 On Windows, `runapp.bat` starts the dev server in the background and opens the browser; `shutdown.bat` stops it. The user usually has it running with the page open: edits reload in the browser on their own, so don't start a second server. Server output goes to `dev-server.log`. `check`, `shots` and `og` use `playwright-core` with the installed Google Chrome; no browser download.

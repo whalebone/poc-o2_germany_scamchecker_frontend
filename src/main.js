@@ -163,11 +163,35 @@ for (const type of SCAM_TYPES) {
   )
 }
 
-// The arrows move one card and do nothing at the ends (aria-disabled keeps their focus).
+// The arrows move by the cards in view (one on phones) and do nothing at the ends (aria-disabled keeps their focus).
+// They aim at a card, not a distance, so a second press while the row still moves adds up.
 // The bar under the row is a scrollbar to look at: its thumb is the part on screen.
 const prev = $('tiles-prev')
 const next = $('tiles-next')
-const cardStep = () => tiles.firstElementChild.offsetWidth + parseFloat(getComputedStyle(tiles).columnGap)
+const cards = [...tiles.children]
+let goal = null // the card the arrows move to, until the row stops
+
+// Where the row stops for a card: at its snap point (centred on phones, the start from 600 px), within the scroll range.
+function stopFor(card) {
+  const max = tiles.scrollWidth - tiles.clientWidth
+  const left = card.getBoundingClientRect().left - tiles.getBoundingClientRect().left + tiles.scrollLeft
+  const offset = getComputedStyle(card).scrollSnapAlign.includes('center')
+    ? (tiles.clientWidth - card.offsetWidth) / 2
+    : parseFloat(getComputedStyle(tiles).scrollPaddingLeft)
+  return Math.min(Math.max(left - offset, 0), max)
+}
+
+function moveTiles(direction) {
+  const stops = cards.map(stopFor)
+  const last = stops.findIndex((stop) => stop >= stops.at(-1) - 1) // the first card that ends the row
+  const distance = (i) => Math.abs(stops[i] - tiles.scrollLeft)
+  const current = goal ?? Math.min(last, cards.reduce((best, _, i) => (distance(i) < distance(best) ? i : best), 0))
+  const inView = Number(getComputedStyle(tiles).getPropertyValue('--per-view')) || 1 // set in style.css from 600 px
+  // Back from the end retraces the way there (1–3, 4–6, 5–7 at 1024 px), so it shows no set you haven't seen.
+  const target = direction < 0 && current === last && last % inView ? last - (last % inView) : current + direction * inView
+  goal = Math.min(Math.max(target, 0), last)
+  tiles.scrollTo({ left: stops[goal], behavior: scrollBehavior() })
+}
 
 function updateTilesNav() {
   const max = tiles.scrollWidth - tiles.clientWidth
@@ -179,11 +203,19 @@ function updateTilesNav() {
 
 for (const [button, direction] of [[prev, -1], [next, 1]]) {
   button.addEventListener('click', () => {
-    if (button.getAttribute('aria-disabled') === 'true') return
-    tiles.scrollBy({ left: direction * cardStep(), behavior: scrollBehavior() })
+    if (button.getAttribute('aria-disabled') !== 'true') moveTiles(direction)
   })
 }
-tiles.addEventListener('scroll', updateTilesNav, { passive: true })
+let settle
+tiles.addEventListener(
+  'scroll',
+  () => {
+    updateTilesNav()
+    clearTimeout(settle)
+    settle = setTimeout(() => (goal = null), 150) // the row has stopped
+  },
+  { passive: true },
+)
 new ResizeObserver(updateTilesNav).observe(tiles) // also when the row comes back after a result
 
 // ---------- Message field ----------

@@ -73,8 +73,8 @@ export const STRINGS = {
     'error.quota': 'Du hast heute schon viele Nachrichten geprüft. Morgen geht’s weiter.',
 
     'types.title': 'Kennst du diese 7 Maschen?', // 7 = the cards in SCAM_TYPES (check.mjs compares)
-    'types.prev': 'Vorherige Masche',
-    'types.next': 'Nächste Masche',
+    'types.prev': 'Vorherige Maschen',
+    'types.next': 'Nächste Maschen',
     'story.play': 'Abspielen',
     'story.pause': 'Pause',
     'story.replay': 'Nochmal ansehen',
@@ -187,8 +187,8 @@ export const STRINGS = {
     'error.quota': 'You’ve checked a lot of messages today. You can check more tomorrow.',
 
     'types.title': 'Know these 7 scams?',
-    'types.prev': 'Previous scam',
-    'types.next': 'Next scam',
+    'types.prev': 'Previous scams',
+    'types.next': 'Next scams',
     'story.play': 'Play',
     'story.pause': 'Pause',
     'story.replay': 'Watch again',

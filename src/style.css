@@ -46,10 +46,6 @@
   box-sizing: border-box;
 }
 
-html {
-  overflow-x: clip; /* the scam cards run to the window edge */
-}
-
 body {
   margin: 0;
   font: 16px/1.4 'On Air', Arial, sans-serif;
@@ -806,10 +802,10 @@ main {
 
 /* ---------- The scam types (below the form until something is checked): a row of cards that scrolls sideways ---------- */
 
-/* --edge is the page margin: the row runs to the screen edges, so the next card peeks in, and its first card
-   lines up with the page. In vw and px only, so margin, padding and scroll-padding agree. */
+/* Phones: the row runs to the screen edges, so the next card peeks in, and its first card lines up with the page.
+   From 600 px: whole cards inside the column (--per-view of them), nothing cut off at the window edge. */
 .types {
-  --edge: max(16px, (100vw - 640px) / 2 + 16px);
+  --tile-gap: 12px;
   display: grid;
   gap: 12px;
   margin-top: 16px;
@@ -820,20 +816,18 @@ main {
 }
 
 .types > h2 {
-  padding: 0 4px;
   font-size: 26px;
 }
 
-/* Padding above and below keeps the card shadows. With classic scrollbars the row is a little wider than
-   the window; html clips that (overflow-x: clip). */
+/* Padding above and below keeps the card shadows. */
 .tiles {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: min(300px, 100% - 56px);
-  gap: 12px;
-  margin: 0 calc(-1 * var(--edge));
-  padding: 8px var(--edge) 24px;
-  scroll-padding-inline: var(--edge);
+  gap: var(--tile-gap);
+  margin: 0 -16px;
+  padding: 8px 16px 24px;
+  scroll-padding-inline: 16px;
   scroll-snap-type: x mandatory;
   overflow-x: auto;
   overscroll-behavior-x: contain;
@@ -1059,6 +1053,24 @@ main {
 /* ---------- Larger screens ---------- */
 
 @media (min-width: 600px) {
+  /* Whole cards that fill the column and snap to its start. 8 px on each side keep the card shadows;
+     the gap is wider, so no sliver of a scrolled-out card or its shadow shows. */
+  .types {
+    --per-view: 2;
+    --tile-gap: 20px;
+  }
+
+  .tiles {
+    grid-auto-columns: calc((100% - (var(--per-view) - 1) * var(--tile-gap)) / var(--per-view));
+    margin: 0 -8px;
+    padding-inline: 8px;
+    scroll-padding-inline: 8px;
+  }
+
+  .tile {
+    scroll-snap-align: start;
+  }
+
   .sheet {
     max-width: 440px;
     margin: auto;
@@ -1271,25 +1283,21 @@ main {
     width: auto;
   }
 
-  /* The scam cards: 3 and a bit at 1024 px, 4 and a bit at 1440 px. */
+  /* The scam cards: 3 in view, 4 from 1200 px (where the column stops growing). */
   .types {
-    --edge: max(32px, (100vw - 1200px) / 2 + 32px);
+    --per-view: 3;
     gap: 16px;
     margin-top: 8px;
   }
 
   .types > h2 {
-    padding: 0;
     font-size: 30px;
   }
+}
 
-  .tiles {
-    grid-auto-columns: 280px;
-    gap: 20px;
-  }
-
-  .tile {
-    scroll-snap-align: start;
+@media (min-width: 1200px) {
+  .types {
+    --per-view: 4;
   }
 }
 

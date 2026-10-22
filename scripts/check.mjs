@@ -148,6 +148,13 @@ check('phones: "next" centres the next card, its neighbours peek in', await p.ev
   return Math.abs((b.left + b.right) / 2 - innerWidth / 2) < 2 && a.right > 24 && c.left < innerWidth - 24
 }))
 check('then "back" works', (await p.getAttribute('#tiles-prev', 'aria-disabled')) === 'false')
+await p.click('#tiles-next')
+await p.click('#tiles-next')
+await p.waitForTimeout(900)
+check('two quick presses move two cards', await p.evaluate(() => {
+  const card = document.querySelector('.tile:nth-child(4)').getBoundingClientRect()
+  return Math.abs((card.left + card.right) / 2 - innerWidth / 2) < 2
+}))
 for (let i = 0; i < 7 && (await p.getAttribute('#tiles-next', 'aria-disabled')) === 'false'; i++) {
   await p.click('#tiles-next')
   await p.waitForTimeout(500)
@@ -279,6 +286,25 @@ check('desktop: one wide composer, the scam cards below it, lined up with it', a
 }))
 check('desktop: the page does not scroll sideways', await d.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth))
 check('desktop: more cards than fit, so "next" works', (await d.getAttribute('#tiles-next', 'aria-disabled')) === 'false')
+// Which cards are whole inside the composer's width, and whether any is cut off
+const inColumn = () =>
+  d.evaluate(() => {
+    const column = document.getElementById('form').getBoundingClientRect()
+    const cards = [...document.querySelectorAll('.tile')].map((el) => el.getBoundingClientRect())
+    const whole = cards.flatMap((r, i) => (r.left >= column.left - 1 && r.right <= column.right + 1 ? [i + 1] : []))
+    const cut = cards.some((r) => r.right > column.left - 8 && r.left < column.right + 8 && !(r.left >= column.left - 1 && r.right <= column.right + 1))
+    return { whole: whole.join(','), cut, fills: Math.abs(cards[whole.at(-1) - 1].right - column.right) < 2 }
+  })
+let row = await inColumn()
+check('desktop: 4 whole cards fill the composer\'s width, none cut off', row.whole === '1,2,3,4' && row.fills && !row.cut, JSON.stringify(row))
+check('desktop: every name fits its card', await d.evaluate(() => [...document.querySelectorAll('.tile h3')].every((h) => h.scrollWidth <= h.clientWidth)))
+await d.click('#tiles-next')
+await d.waitForTimeout(900)
+row = await inColumn()
+check('desktop: "next" brings in the next cards, here the last 4', row.whole === '4,5,6,7' && !row.cut && (await d.getAttribute('#tiles-next', 'aria-disabled')) === 'true', JSON.stringify(row))
+await d.click('#tiles-prev')
+await d.waitForTimeout(900)
+check('desktop: "back" returns to the start', (await inColumn()).whole === '1,2,3,4' && (await d.getAttribute('#tiles-prev', 'aria-disabled')) === 'true')
 await d.click('#example')
 await d.focus('#message')
 await d.keyboard.press('Control+Enter')

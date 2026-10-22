@@ -124,7 +124,7 @@ Round 4 (feedback on the deployed round 3, 2026-10-20):
 **Desktop (from 1024 px):** full-width rows, one thing at a time, no tiles side by side.
 1. A compact hero (H1 64 px, the lead on one line, a small bubble in the free dark area).
 2. One wide composer card overlapping the hero: the field (3 rows, growing to 8) and "Jetzt prüfen" to its right, bottom-aligned.
-3. Below it, either the scam cards (the same row, 280 px cards: 3 and a peek at 1024, 4 and a peek at 1440), or the checking card (the drawing centred, at most 720 px), or the result.
+3. Below it, either the scam cards (the same row, whole cards that fill the composer's width: 3 at 1024, 4 from 1200 px), or the checking card (the drawing centred, at most 720 px), or the result.
 4. The result as full-width cards, each split in two halves of the same height: verdict (pink half with the still picture and its caption / the headline as title, the reason, steps, help, feedback), Onlineschutz (phone and shield / words and button), the trick (scene / steps and rule), share as a slim band.
 
 **A story** (on the result only, since round 3): a cartoon of 9 s in three beats, the three steps under it as a little diagram (① — ② — ③, lit in step with the beats), and one rule to remember with a tick.
@@ -331,16 +331,21 @@ The designer's verdict on the concept: go with changes (all MUSTs taken, deviati
 
 **The carousel**
 - The owner asked for it, so it reverses round 2's "no carousel, because most people never swipe one". What makes up for that:
-  - the next card peeks in on every width
+  - on phones the next card peeks in (from 600 px whole cards instead, see below)
   - ← and → buttons under the row on every screen size
   - a bar between them that shows how far the row is scrolled
   - „7“ in the heading, so swiping feels worth it, with a no-break space so it never ends a line alone. `check.mjs` compares it with the number of cards.
 - Native horizontal scroll with `scroll-snap`, no library. The `<ul>` is the scroller: `tabindex="0"` so arrow keys scroll it (Safari doesn't make scrollers focusable), labelled by the heading, read as "list, 7 items". It needs `role="list"`, because Safari drops the list role when `list-style` is none. The designer suggested a `role="region"` wrapper; the list itself keeps its semantics with one level less, and the CSS stays simple.
-- Phones snap a card to the centre: the cards before and after it peek in by about 33 px at 390, and the first and last stop at the page edge. With start snapping, 4 px of the previous card showed (edge 16 px, gap 12 px), which looked like a glitch. Desktop snaps to the start.
-- The row runs to the window edges (`--edge` in `style.css`, in vw and px only so margin, padding and scroll-padding agree). At scroll 0 the first card lines up with the page; scrolled cards slide off on both sides. With classic scrollbars the row is the scrollbar's width too wide, and `html { overflow-x: clip }` stops the page from scrolling sideways.
-- Card width `min(300px, 100% - 56px)` on phones (272 px at 360, so „Hallo‑Mama‑Schwindler“ fits at 20 px), 280 px on desktop. Cards stretch to the tallest; the picture sits at the bottom, so the pictures line up.
+- **Phones (below 600 px):** the row runs to the screen edges (16 px past the column on each side). A card snaps to the centre: the cards before and after it peek in by about 33 px at 390, and the first and last stop at the page edge. With start snapping, 4 px of the previous card showed (edge 16 px, gap 12 px), which looked like a glitch. Card width `min(300px, 100% - 56px)` (272 px at 360, so „Hallo‑Mama‑Schwindler“ fits at 20 px).
+- **From 600 px (since 2026-10-22):** whole cards only, inside the column, filling it exactly: 2 on tablets, 3 at 1024–1199, 4 from 1200 px, where the column stops growing (`--per-view` in `style.css`, read by `main.js` too). They snap to the start; the gap is 20 px. Before, the desktop row ran past the composer to the window edge, where a card was sliced at an arbitrary point. The owner found that weird.
+  - This reverses round 4's "the next card peeks in on every width". The designer agreed: a peek inside the column would be a cut card again, just moved inwards, and a fade (`mask-image`) would also fade the list's focus ring. Enough says there's more: the bar's thumb covers 57 % of the track at 1440, 43 % at 1024 and 29 % at 768; → is blue while ← is grey; the heading says „7“.
+  - 8 px of padding on each side keep the card shadows. The gap is wider than that, so no sliver of a scrolled-out card, or its shadow, shows. With a 12 px gap on tablets the two shadows added up to a grey band at the edge.
+  - Cards jump from 365 px at 1199 to 269 px at 1200. Four in view need at least 1164 px for the names to fit. At 269 px „Hallo‑Mama‑Schwindler“ uses 220 of its 229 px: a longer name would break here (`check.mjs` checks the names at 1280).
+- Cards stretch to the tallest; the picture sits at the bottom, so the pictures line up.
 - The arrows:
-  - move one card per press
+  - move by the cards in view (one on phones): → brings in the cards after the last one in view, or as many as remain (1–3, 4–6, 5–7 at 1024). Back from the end retraces that way (5–7, 4–6, 1–3), so it shows no set you haven't seen.
+  - aim at a card, not a distance, so a second press while the row still moves adds up (before, it could get lost)
+  - are labelled „Vorherige Maschen“ / „Nächste Maschen“ ("Previous scams" / "Next scams")
   - are outline (white disc, 2 px ring), so „Jetzt prüfen“ stays the only filled button
   - at the ends they dim with `aria-disabled`, not `disabled`, so a focused → keeps its focus
   - jump instead of scrolling smoothly with reduced motion
@@ -417,6 +422,8 @@ Next iteration:
 - **Animation smoothness** on a low-end Android phone.
 - **Second example:** a scam without a link („Hallo Mama“).
 - **Accessibility audit:** axe or Lighthouse, plus a VoiceOver run, including the carousel (the focusable list, the arrows at the ends).
+- **Carousel at 500–599 px** (phones in landscape, split screen): the phone layout centres a 300 px card, so up to 271 px of the next one shows, cut at the window edge again.
+- **Carousel at 1024×768:** the arrows and the bar sit below the fold, so only the „7“ says there are more than the three cards. The designer's option: the arrows in the heading row, on desktop only. Not taken yet; people scroll anyway, because the pictures are cut at the bottom.
 
 ## How to iterate
 
@@ -433,6 +440,7 @@ Next iteration:
    - `m…` phone 390 px German
    - `s…` small phones
    - `e…` English at 360 px
+   - `t…` the scam cards on a 768 px tablet
    - `d…` desktop 1440 and 1024 px
 5. To check an animation, pause every animation at fixed times and take a screenshot of each moment, as a filmstrip (see the Gotchas in `CLAUDE.md`).
 6. For any visible UX change, run a design review (below).
